@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
 
 import {
-  assetIdParamsSchema,
-  createAssetSchema,
-  transferAssetSchema,
-  updateAssetSchema
-} from './asset.schema';
+  parseAssetIdParams,
+  parseCreateAssetBody,
+  parseTransferAssetBody,
+  parseUpdateAssetBody
+} from './asset.dto';
 import * as assetService from './asset.service';
 
 export async function getAssets(_req: Request, res: Response): Promise<void> {
@@ -18,8 +18,8 @@ export async function getAssets(_req: Request, res: Response): Promise<void> {
 }
 
 export async function getAsset(req: Request, res: Response): Promise<void> {
-  const { params } = assetIdParamsSchema.parse({ params: req.params });
-  const asset = await assetService.getAssetById(params.id);
+  const id = parseAssetIdParams(req.params);
+  const asset = await assetService.getAssetById(id);
 
   res.json({
     success: true,
@@ -28,7 +28,7 @@ export async function getAsset(req: Request, res: Response): Promise<void> {
 }
 
 export async function createAsset(req: Request, res: Response): Promise<void> {
-  const { body } = createAssetSchema.parse({ body: req.body });
+  const body = parseCreateAssetBody(req.body as unknown);
   const result = await assetService.createAsset(body);
 
   res.status(201).json({
@@ -39,8 +39,9 @@ export async function createAsset(req: Request, res: Response): Promise<void> {
 }
 
 export async function updateAsset(req: Request, res: Response): Promise<void> {
-  const { params, body } = updateAssetSchema.parse({ params: req.params, body: req.body });
-  const result = await assetService.updateAsset(params.id, body);
+  const id = parseAssetIdParams(req.params);
+  const body = parseUpdateAssetBody(req.body as unknown);
+  const result = await assetService.updateAsset(id, body);
 
   res.json({
     success: true,
@@ -50,8 +51,8 @@ export async function updateAsset(req: Request, res: Response): Promise<void> {
 }
 
 export async function deleteAsset(req: Request, res: Response): Promise<void> {
-  const { params } = assetIdParamsSchema.parse({ params: req.params });
-  const result = await assetService.deleteAsset(params.id);
+  const id = parseAssetIdParams(req.params);
+  const result = await assetService.deleteAsset(id);
 
   res.json({
     success: true,
@@ -61,8 +62,9 @@ export async function deleteAsset(req: Request, res: Response): Promise<void> {
 }
 
 export async function transferAsset(req: Request, res: Response): Promise<void> {
-  const { params, body } = transferAssetSchema.parse({ params: req.params, body: req.body });
-  const result = await assetService.transferAsset(params.id, body);
+  const id = parseAssetIdParams(req.params);
+  const body = parseTransferAssetBody(req.body as unknown);
+  const result = await assetService.transferAsset(id, body);
 
   res.json({
     success: true,

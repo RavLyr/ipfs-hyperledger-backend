@@ -2,11 +2,10 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
-import { evaluateTransaction } from './fabric/fabric.service';
-import { errorHandler } from './middleware/error-handler';
-import { notFound } from './middleware/not-found';
+import { errorMiddleware } from './middlewares/error.middleware';
+import { notFoundMiddleware } from './middlewares/not-found.middleware';
 import { assetRoutes } from './modules/assets/asset.routes';
-import { asyncHandler } from './utils/async-handler';
+import { fabricRoutes } from './modules/fabric/fabric.routes';
 
 export const app = express();
 
@@ -20,23 +19,9 @@ app.get('/health', (_req, res) => {
   });
 });
 
-app.get(
-  '/fabric/health',
-  asyncHandler(async (_req, res) => {
-    const assets = await evaluateTransaction('GetAllAssets');
-    const itemCount = Array.isArray(assets) ? assets.length : null;
-
-    res.json({
-      success: true,
-      data: {
-        status: 'connected',
-        itemCount
-      }
-    });
-  })
-);
-
+app.use('/fabric', fabricRoutes);
+app.use('/api/fabric', fabricRoutes);
 app.use('/assets', assetRoutes);
 
-app.use(notFound);
-app.use(errorHandler);
+app.use(notFoundMiddleware);
+app.use(errorMiddleware);

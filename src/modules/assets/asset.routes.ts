@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { asyncHandler } from '../../utils/async-handler';
+import { asyncHandler } from '../../utils/asyncHandler';
 import * as assetController from './asset.controller';
 
 export const assetRoutes = Router();

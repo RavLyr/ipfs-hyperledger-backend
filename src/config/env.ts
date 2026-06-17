@@ -1,24 +1,52 @@
 import dotenv from 'dotenv';
-import { z } from 'zod';
+
+import { AppError } from '../errors/AppError';
 
 dotenv.config();
 
-const envSchema = z.object({
-  PORT: z.coerce.number().int().positive().default(3000),
-  FABRIC_CHANNEL_NAME: z.string().min(1),
-  FABRIC_CHAINCODE_NAME: z.string().min(1),
-  FABRIC_MSP_ID: z.string().min(1),
-  FABRIC_PEER_ENDPOINT: z.string().min(1),
-  FABRIC_PEER_TLS_HOST_OVERRIDE: z.string().min(1),
-  FABRIC_TLS_CERT_PATH: z.string().min(1),
-  FABRIC_CLIENT_CERT_PATH: z.string().min(1),
-  FABRIC_CLIENT_KEY_PATH: z.string().min(1)
-});
+export type Env = {
+  readonly PORT: number;
+  readonly FABRIC_CHANNEL_NAME: string;
+  readonly FABRIC_CHAINCODE_NAME: string;
+  readonly FABRIC_MSP_ID: string;
+  readonly FABRIC_PEER_ENDPOINT: string;
+  readonly FABRIC_PEER_TLS_HOST_OVERRIDE: string;
+  readonly FABRIC_TLS_CERT_PATH: string;
+  readonly FABRIC_CLIENT_CERT_PATH: string;
+  readonly FABRIC_CLIENT_KEY_PATH: string;
+};
 
-const parsedEnv = envSchema.safeParse(process.env);
+function readString(name: keyof Omit<Env, 'PORT'>): string {
+  const value = process.env[name];
 
-if (!parsedEnv.success) {
-  throw new Error(`Invalid environment variables: ${JSON.stringify(parsedEnv.error.flatten().fieldErrors)}`);
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    throw new AppError(`Invalid environment variable: ${name}`, 500);
+  }
+
+  return value.trim();
 }
 
-export const env = parsedEnv.data;
+function readPort(): number {
+  const rawValue = process.env.PORT ?? '3000';
+  const port = Number(rawValue);
+
+  if (!Number.isInteger(port) || port <= 0) {
+    throw new AppError('Invalid environment variable: PORT', 500, {
+      PORT: 'Expected a positive integer'
+    });
+  }
+
+  return port;
+}
+
+export const env: Env = {
+  PORT: readPort(),
+  FABRIC_CHANNEL_NAME: readString('FABRIC_CHANNEL_NAME'),
+  FABRIC_CHAINCODE_NAME: readString('FABRIC_CHAINCODE_NAME'),
+  FABRIC_MSP_ID: readString('FABRIC_MSP_ID'),
+  FABRIC_PEER_ENDPOINT: readString('FABRIC_PEER_ENDPOINT'),
+  FABRIC_PEER_TLS_HOST_OVERRIDE: readString('FABRIC_PEER_TLS_HOST_OVERRIDE'),
+  FABRIC_TLS_CERT_PATH: readString('FABRIC_TLS_CERT_PATH'),
+  FABRIC_CLIENT_CERT_PATH: readString('FABRIC_CLIENT_CERT_PATH'),
+  FABRIC_CLIENT_KEY_PATH: readString('FABRIC_CLIENT_KEY_PATH')
+};

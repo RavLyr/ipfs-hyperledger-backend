@@ -1,5 +1,5 @@
 import { env } from './config/env';
-import { closeGateway } from './fabric/gateway';
+import { closeFabricClient } from './modules/fabric/fabric.service';
 import { app } from './app';
 
 const server = app.listen(env.PORT, () => {
@@ -9,8 +9,8 @@ const server = app.listen(env.PORT, () => {
 function shutdown(signal: NodeJS.Signals): void {
   console.log(`${signal} received, shutting down`);
 
-  server.close(() => {
-    closeGateway();
+  server.close((): void => {
+    closeFabricClient();
     process.exit(0);
   });
 }

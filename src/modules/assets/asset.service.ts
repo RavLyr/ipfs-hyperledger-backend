@@ -1,5 +1,5 @@
-import { evaluateTransaction, submitTransaction } from '../../fabric/fabric.service';
-import type { CreateAssetInput, TransferAssetInput, UpdateAssetInput } from './asset.schema';
+import { evaluateTransaction, submitTransaction } from '../fabric/fabric.service';
+import type { CreateAssetInput, TransferAssetInput, UpdateAssetInput } from './asset.dto';
 
 function toChaincodeNumber(value: number): string {
   return String(value);
