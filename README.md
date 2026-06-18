@@ -1,22 +1,41 @@
-# Express TypeScript Fabric Gateway Backend
+# Academic Certificate Fabric Gateway Backend
 
-Backend REST API untuk mengakses Hyperledger Fabric chaincode `basic` melalui Fabric Gateway SDK. Backend ini tidak memakai Fabric CLI.
+Express TypeScript backend untuk Hyperledger Fabric Certificate Lifecycle Chaincode. Backend ini hanya mengirim metadata auditable ke ledger; PDF dan data mahasiswa sensitif tetap berada di backend/storage eksternal.
 
-## 1. Install
+## Scope Ledger
+
+Ledger menyimpan:
+
+- Issuer metadata
+- Certificate metadata
+- Revocation record
+- Reissue record
+- Certificate history dari Fabric
+
+Ledger tidak menyimpan:
+
+- PDF
+- nama mahasiswa
+- NIM mentah
+- tanggal lahir
+- IPK
+- verification log backend
+
+## Install
 
 ```bash
 npm install
 ```
 
-## 2. Isi `.env`
+## Environment
 
-Salin `.env.example` menjadi `.env`, lalu sesuaikan path crypto material jika lokasi Fabric repo berbeda.
+Salin `.env.example` menjadi `.env`, lalu sesuaikan channel, chaincode, peer endpoint, dan crypto material.
 
 ```bash
 cp .env.example .env
 ```
 
-Contoh nilai development lokal:
+Contoh:
 
 ```env
 PORT=3000
@@ -25,20 +44,12 @@ FABRIC_CHAINCODE_NAME=basic
 FABRIC_MSP_ID=Org1MSP
 FABRIC_PEER_ENDPOINT=localhost:7051
 FABRIC_PEER_TLS_HOST_OVERRIDE=peer1org1.example.com
-FABRIC_TLS_CERT_PATH=/mnt/d/Documents/programming/Blockchain/hyperledger-f/organization/peerOrganizations/org1.example.com/peers/peer1.org1.ravly.com/tls/cacerts/localhost-7054.pem
-FABRIC_CLIENT_CERT_PATH=/mnt/d/Documents/programming/Blockchain/hyperledger-f/organization/peerOrganizations/org1.example.com/peers/peer0.org1.ravly.com/msp/signcerts/org1-admin-cert.pem
-FABRIC_CLIENT_KEY_PATH=/mnt/d/Documents/programming/Blockchain/hyperledger-f/organization/peerOrganizations/org1.example.com/peers/peer0.org1.ravly.com/msp/keystore/org1-admin-key.pem
+FABRIC_TLS_CERT_PATH=/mnt/d/path/to/tls-ca.pem
+FABRIC_CLIENT_CERT_PATH=/mnt/d/path/to/signcert.pem
+FABRIC_CLIENT_KEY_PATH=/mnt/d/path/to/private-key.pem
 ```
 
-## 3. Pastikan Fabric Network Hidup
-
-```bash
-cd /mnt/d/Documents/programming/Blockchain/hyperledger-f && docker compose ps
-```
-
-Peer endpoint dari host harus bisa diakses di `localhost:7051`.
-
-## 4. Run Dev
+## Run
 
 ```bash
 npm run dev
@@ -50,152 +61,134 @@ API berjalan di:
 http://localhost:3000
 ```
 
-## 5. Contoh Request curl
+## API
 
-Health API:
+Health:
 
 ```bash
 curl http://localhost:3000/health
-```
-
-Health Fabric Gateway:
-
-```bash
 curl http://localhost:3000/fabric/health
 ```
 
-Get all assets:
+Initialize ledger:
 
 ```bash
-curl http://localhost:3000/assets
+curl -X POST http://localhost:3000/api/ledger/init
 ```
 
-Read asset:
+Register issuer:
 
 ```bash
-curl http://localhost:3000/assets/asset1
-```
-
-Create asset:
-
-```bash
-curl -X POST http://localhost:3000/assets \
+curl -X POST http://localhost:3000/api/issuers \
   -H "Content-Type: application/json" \
   -d '{
-    "id": "asset7",
-    "color": "purple",
-    "size": 20,
-    "owner": "Dhanxxi",
-    "appraisedValue": 900
+    "issuerId": "DEMO_ISSUER",
+    "organizationName": "Demo University",
+    "departmentName": "Academic Office",
+    "mspId": "Org1MSP"
   }'
 ```
 
-Update asset:
+Get issuer:
 
 ```bash
-curl -X PUT http://localhost:3000/assets/asset7 \
+curl http://localhost:3000/api/issuers/DEMO_ISSUER
+curl http://localhost:3000/api/issuers/DEMO_ISSUER/exists
+```
+
+Issue certificate:
+
+```bash
+curl -X POST http://localhost:3000/api/certificates \
   -H "Content-Type: application/json" \
   -d '{
-    "color": "black",
-    "size": 10,
-    "owner": "Dhanxxi",
-    "appraisedValue": 1000
+    "certificateId": "CERT-001",
+    "certificateNumber": "NO-001",
+    "studentId": "NIM-RAW-001",
+    "issuerId": "DEMO_ISSUER",
+    "certificateType": "DIPLOMA",
+    "title": "Bachelor Certificate",
+    "documentBase64": "BASE64_PDF_BYTES",
+    "ipfsCid": "bafy...",
+    "issuedAt": "2026-06-18T00:00:00Z",
+    "expiredAt": ""
   }'
 ```
 
-Transfer asset:
+Backend akan hash `studentId` menjadi `studentIdHash` dan hash bytes dari `documentBase64` menjadi `documentHash` sebelum memanggil chaincode. Jika hash sudah dihitung di layer lain, kirim `studentIdHash` dan `documentHash` langsung.
+
+Verify certificate:
 
 ```bash
-curl -X POST http://localhost:3000/assets/asset7/transfer \
+curl -X POST http://localhost:3000/api/certificates/CERT-001/verify \
   -H "Content-Type: application/json" \
   -d '{
-    "newOwner": "Alice"
+    "documentBase64": "BASE64_PDF_BYTES"
   }'
 ```
 
-Delete asset:
+Revoke certificate:
 
 ```bash
-curl -X DELETE http://localhost:3000/assets/asset7
+curl -X POST http://localhost:3000/api/certificates/CERT-001/revoke \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "Incorrect uploaded document",
+    "revokedAt": "2026-06-18T01:00:00Z"
+  }'
 ```
 
-## 6. Contoh Body JSON untuk Hoppscotch
+Backend akan hash `reason` menjadi `reasonHash` sebelum memanggil ledger.
 
-POST `/assets`
+Reissue certificate:
 
-```json
-{
-  "id": "asset7",
-  "color": "purple",
-  "size": 20,
-  "owner": "Dhanxxi",
-  "appraisedValue": 900
-}
+```bash
+curl -X POST http://localhost:3000/api/certificates/CERT-001/reissue \
+  -H "Content-Type: application/json" \
+  -d '{
+    "newCertificateId": "CERT-002",
+    "newCertificateNumber": "NO-002",
+    "newDocumentBase64": "BASE64_NEW_PDF_BYTES",
+    "newIpfsCid": "bafy-new...",
+    "reason": "Corrected document",
+    "reissuedAt": "2026-06-18T02:00:00Z"
+  }'
 ```
 
-PUT `/assets/:id`
+Other reads:
 
-```json
-{
-  "color": "black",
-  "size": 10,
-  "owner": "Dhanxxi",
-  "appraisedValue": 1000
-}
+```bash
+curl http://localhost:3000/api/certificates
+curl http://localhost:3000/api/certificates/CERT-001
+curl http://localhost:3000/api/certificates/CERT-001/exists
+curl http://localhost:3000/api/certificates/CERT-001/revocation
+curl http://localhost:3000/api/certificates/CERT-001/history
+curl http://localhost:3000/api/issuers/DEMO_ISSUER/certificates
 ```
 
-POST `/assets/:id/transfer`
+## Chaincode Mapping
 
-```json
-{
-  "newOwner": "Alice"
-}
-```
-
-## 7. Catatan Pengembangan Domain Ijazah
-
-Saat chaincode nanti diganti menjadi sistem ijazah, file yang terutama diubah atau ditambah adalah service, schema, controller, dan routes di module domain baru, misalnya `src/modules/ijazah/*`.
-
-Layer `src/fabric/*` tetap dipakai karena sudah berisi koneksi Gateway, pemilihan contract, `evaluateTransaction(functionName, ...args)`, dan `submitTransaction(functionName, ...args)`.
-
-## Response Format
-
-Success:
-
-```json
-{
-  "success": true,
-  "data": {}
-}
-```
-
-Mutation success:
-
-```json
-{
-  "success": true,
-  "message": "Asset created successfully",
-  "data": null
-}
-```
-
-Error:
-
-```json
-{
-  "success": false,
-  "error": {
-    "message": "Validation failed",
-    "details": {}
-  }
-}
-```
+- `InitLedger()`
+- `RegisterIssuer(issuerID, organizationName, departmentName, mspID)`
+- `GetIssuer(issuerID)`
+- `IssuerExists(issuerID)`
+- `IssueCertificate(certificateID, certificateNumber, studentIDHash, issuerID, certificateType, title, documentHash, ipfsCid, issuedAt, expiredAt)`
+- `GetCertificate(certificateID)`
+- `CertificateExists(certificateID)`
+- `VerifyCertificate(certificateID, documentHash)`
+- `RevokeCertificate(certificateID, reasonHash, revokedAt)`
+- `GetRevocationInfo(certificateID)`
+- `ReissueCertificate(oldCertificateID, newCertificateID, newCertificateNumber, newDocumentHash, newIpfsCid, reasonHash, reissuedAt)`
+- `GetCertificateHistory(certificateID)`
+- `GetAllCertificates()`
+- `GetCertificatesByIssuer(issuerID)`
 
 ## Scripts
 
 ```bash
 npm run dev
 npm run typecheck
+npm test
 npm run build
 npm start
 ```
