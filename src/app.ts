@@ -2,9 +2,9 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
-import { errorMiddleware } from './middlewares/error.middleware';
-import { notFoundMiddleware } from './middlewares/not-found.middleware';
-import { assetRoutes } from './modules/assets/asset.routes';
+import { errorMiddleware } from './middleware/error.middleware';
+import { notFoundMiddleware } from './middleware/not-found.middleware';
+import { certificateRoutes } from './modules/certificates/certificate.routes';
 import { fabricRoutes } from './modules/fabric/fabric.routes';
 
 export const app = express();
@@ -21,7 +21,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/fabric', fabricRoutes);
 app.use('/api/fabric', fabricRoutes);
-app.use('/assets', assetRoutes);
+app.use('/api', certificateRoutes);
 
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

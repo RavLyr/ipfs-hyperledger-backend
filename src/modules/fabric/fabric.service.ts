@@ -7,8 +7,8 @@ import type { FabricHealth, FabricInvokeResult } from './fabric.types';
 const fabricClient = new FabricGatewayClient(fabricConfig);
 
 export async function getFabricHealth(): Promise<FabricHealth> {
-  const assets = await evaluateTransaction('GetAllAssets');
-  const itemCount = Array.isArray(assets) ? assets.length : null;
+  const certificates = await evaluateTransaction('GetAllCertificates');
+  const itemCount = Array.isArray(certificates) ? certificates.length : null;
 
   return {
     status: 'connected',
