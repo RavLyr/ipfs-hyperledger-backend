@@ -14,6 +14,13 @@ export type Env = {
   readonly FABRIC_TLS_CERT_PATH: string;
   readonly FABRIC_CLIENT_CERT_PATH: string;
   readonly FABRIC_CLIENT_KEY_PATH: string;
+  readonly DB_HOST: string;
+  readonly DB_PORT: number;
+  readonly DB_USER: string;
+  readonly DB_PASSWORD: string;
+  readonly DB_NAME: string;
+  readonly IPFS_API_URL: string;
+  readonly IPFS_GATEWAY_URL: string;
 };
 
 function readString(name: keyof Omit<Env, 'PORT'>): string {
@@ -48,5 +55,12 @@ export const env: Env = {
   FABRIC_PEER_TLS_HOST_OVERRIDE: readString('FABRIC_PEER_TLS_HOST_OVERRIDE'),
   FABRIC_TLS_CERT_PATH: readString('FABRIC_TLS_CERT_PATH'),
   FABRIC_CLIENT_CERT_PATH: readString('FABRIC_CLIENT_CERT_PATH'),
-  FABRIC_CLIENT_KEY_PATH: readString('FABRIC_CLIENT_KEY_PATH')
+  FABRIC_CLIENT_KEY_PATH: readString('FABRIC_CLIENT_KEY_PATH'),
+  DB_HOST: process.env.DB_HOST || "localhost",
+  DB_PORT: Number(process.env.DB_PORT || 5433),
+  DB_USER: process.env.DB_USER || "postgres",
+  DB_PASSWORD: process.env.DB_PASSWORD || "password",
+  DB_NAME: process.env.DB_NAME || "ipfs_hyperledger_db",
+  IPFS_API_URL: process.env.IPFS_API_URL || "http://127.0.0.1:5001",
+  IPFS_GATEWAY_URL: process.env.IPFS_GATEWAY_URL || "http://127.0.0.1:8080",
 };
