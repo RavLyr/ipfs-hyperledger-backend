@@ -155,3 +155,156 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
 }
 
 export const certificateService = createCertificateService();
+
+import { uploadToIPFS } from "../../infrastructure/ipfs/ipfs.service";
+import {
+  findAllCertificates,
+  findCertificateByNomorIjazah,
+  insertCertificate,
+} from "./certificate.repository";
+import type { Certificate, CertificateTextInput } from "./certificate.dto";
+
+const REQUIRED_FIELDS = [
+  "nama_mahasiswa",
+  "nim",
+  "email_mahasiswa",
+  "program_studi",
+  "fakultas",
+  "tahun_masuk",
+  "tahun_lulus",
+  "nomor_ijazah",
+  "tanggal_terbit_ijazah",
+] as const;
+
+type RawBody = Record<string, unknown>;
+
+export async function uploadCertificate(
+  body: RawBody,
+  file: Express.Multer.File | undefined
+): Promise<Certificate> {
+  const input = validateCertificateBody(body);
+
+  if (!file) {
+    throw new Error("file_ijazah is required");
+  }
+
+  const existingCertificate = await findCertificateByNomorIjazah(
+    input.nomor_ijazah
+  );
+
+  if (existingCertificate) {
+    throw new Error(`nomor_ijazah already exists: ${input.nomor_ijazah}`);
+  }
+
+  const cid = await uploadToIPFS(file.buffer, file.originalname);
+
+  const savedCertificate = await insertCertificate({
+    ...input,
+    cid,
+    file_name: file.originalname,
+    mime_type: file.mimetype,
+    file_size: file.size,
+    ledger_tx_id: "PENDING_CHAINCODE",
+    status: "VALID",
+  });
+
+  return savedCertificate;
+}
+
+export async function verifyCertificateService(
+  nomorIjazah: string
+): Promise<Certificate | null> {
+  const cleanNomorIjazah = nomorIjazah.trim();
+
+  if (!cleanNomorIjazah) {
+    throw new Error("nomor_ijazah is required");
+  }
+
+  return findCertificateByNomorIjazah(cleanNomorIjazah);
+}
+
+export async function getAllCertificatesService(): Promise<Certificate[]> {
+  return findAllCertificates();
+}
+
+function validateCertificateBody(body: RawBody): CertificateTextInput {
+  const missingFields = REQUIRED_FIELDS.filter((field) => {
+    const value = body[field];
+    return typeof value !== "string" || value.trim() === "";
+  });
+
+  if (missingFields.length > 0) {
+    throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+  }
+
+  const nama_mahasiswa = clean(body.nama_mahasiswa);
+  const nim = clean(body.nim);
+  const email_mahasiswa = clean(body.email_mahasiswa);
+  const program_studi = clean(body.program_studi);
+  const fakultas = clean(body.fakultas);
+  const nomor_ijazah = clean(body.nomor_ijazah);
+  const tanggal_terbit_ijazah = clean(body.tanggal_terbit_ijazah);
+
+  const tahun_masuk = parseYear(body.tahun_masuk, "tahun_masuk");
+  const tahun_lulus = parseYear(body.tahun_lulus, "tahun_lulus");
+
+  if (!isValidEmail(email_mahasiswa)) {
+    throw new Error("email_mahasiswa format is invalid");
+  }
+
+  if (tahun_lulus < tahun_masuk) {
+    throw new Error("tahun_lulus cannot be smaller than tahun_masuk");
+  }
+
+  if (!isValidDateOnly(tanggal_terbit_ijazah)) {
+    throw new Error("tanggal_terbit_ijazah must use YYYY-MM-DD format");
+  }
+
+  return {
+    nama_mahasiswa,
+    nim,
+    email_mahasiswa,
+    program_studi,
+    fakultas,
+    tahun_masuk,
+    tahun_lulus,
+    nomor_ijazah,
+    tanggal_terbit_ijazah,
+  };
+}
+
+function clean(value: unknown): string {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim();
+}
+
+function parseYear(value: unknown, fieldName: string): number {
+  const parsed = Number(clean(value));
+
+  if (!Number.isInteger(parsed)) {
+    throw new Error(`${fieldName} must be an integer`);
+  }
+
+  if (parsed < 1900 || parsed > 2100) {
+    throw new Error(`${fieldName} is out of allowed range`);
+  }
+
+  return parsed;
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function isValidDateOnly(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  return !Number.isNaN(date.getTime());
+}

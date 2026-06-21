@@ -7,9 +7,12 @@ import {
   parseRegisterIssuerBody,
   parseReissueCertificateBody,
   parseRevokeCertificateBody,
-  parseVerifyCertificateBody
+  parseVerifyCertificateBody,
 } from './certificate.dto';
-import { certificateService } from './certificate.service';
+import { certificateService,
+    getAllCertificatesService,
+    uploadCertificate,
+    verifyCertificateService   , } from './certificate.service';
 
 export async function initLedger(_req: Request, res: Response): Promise<void> {
   const result = await certificateService.initLedger();
@@ -120,4 +123,57 @@ export async function getCertificatesByIssuer(req: Request, res: Response): Prom
   const result = await certificateService.getCertificatesByIssuer(issuerId);
 
   res.json({ success: true, data: result });
+}
+
+
+
+export async function uploadCertificateController(
+  req: Request,
+  res: Response
+): Promise<void> {
+  const certificate = await uploadCertificate(req.body, req.file);
+
+  res.status(201).json({
+    success: true,
+    message: "Certificate uploaded successfully",
+    data: certificate,
+  });
+}
+
+type VerifyCertificateParams = {
+  nomorIjazah: string;
+};
+
+export async function verifyCertificateController(
+  req: Request<VerifyCertificateParams>,
+  res: Response
+): Promise<void> {
+  const certificate = await verifyCertificateService(req.params.nomorIjazah);
+
+  if (!certificate) {
+    res.json({
+      success: true,
+      valid: false,
+      data: null,
+    });
+    return;
+  }
+
+  res.json({
+    success: true,
+    valid: true,
+    data: certificate,
+  });
+}
+
+export async function getAllCertificatesController(
+  _req: Request,
+  res: Response
+): Promise<void> {
+  const certificates = await getAllCertificatesService();
+
+  res.json({
+    success: true,
+    data: certificates,
+  });
 }
