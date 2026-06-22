@@ -1,5 +1,10 @@
 import { Router } from 'express';
-
+import { upload } from "../../middleware/upload.middleware";
+import {
+  getAllCertificatesController,
+  uploadCertificateController,
+  verifyCertificateController,
+} from "./certificate.controller";
 import { asyncHandler } from '../../utils/asyncHandler';
 import * as certificateController from './certificate.controller';
 
@@ -30,3 +35,16 @@ certificateRoutes.get(
 );
 certificateRoutes.post('/certificates/:certificateId/reissue', asyncHandler(certificateController.reissueCertificate));
 certificateRoutes.get('/certificates/:certificateId/history', asyncHandler(certificateController.getCertificateHistory));
+
+certificateRoutes.post(
+  "/upload",
+  upload.single("file_ijazah"),
+  uploadCertificateController
+);
+
+certificateRoutes.get(
+  "/verify/:nomorIjazah",
+  verifyCertificateController
+);
+
+certificateRoutes.get("/", getAllCertificatesController);

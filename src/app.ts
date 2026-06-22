@@ -15,13 +15,15 @@ app.use(express.json());
 
 app.get('/health', (_req, res) => {
   res.json({
-    status: 'ok'
+    status: 'ok',
+    success: true,
+    message: "Server is running"
   });
 });
 
 app.use('/fabric', fabricRoutes);
 app.use('/api/fabric', fabricRoutes);
 app.use('/api', certificateRoutes);
-
+app.use("/certificates", certificateRoutes);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

@@ -219,3 +219,50 @@ export function parseReissueCertificateBody(params: unknown, body: unknown): Rei
     reissuedAt: readNonEmptyString(body, 'reissuedAt') ?? new Date().toISOString()
   };
 }
+export type CertificateStatus = "VALID" | "REVOKED";
+
+export interface Certificate {
+  id: number;
+
+  nama_mahasiswa: string;
+  nim: string;
+  email_mahasiswa: string;
+  program_studi: string;
+  fakultas: string;
+  tahun_masuk: number;
+  tahun_lulus: number;
+  nomor_ijazah: string;
+  tanggal_terbit_ijazah: string;
+
+  cid: string;
+  file_name: string | null;
+  mime_type: string | null;
+  file_size: number | null;
+
+  ledger_tx_id: string;
+  status: CertificateStatus;
+
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CertificateTextInput {
+  nama_mahasiswa: string;
+  nim: string;
+  email_mahasiswa: string;
+  program_studi: string;
+  fakultas: string;
+  tahun_masuk: number;
+  tahun_lulus: number;
+  nomor_ijazah: string;
+  tanggal_terbit_ijazah: string;
+}
+
+export interface CreateCertificateInput extends CertificateTextInput {
+  cid: string;
+  file_name: string;
+  mime_type: string;
+  file_size: number;
+  ledger_tx_id: string;
+  status: CertificateStatus;
+}
