@@ -1,172 +1,98 @@
-import { pool } from "../../config/db";
-import type { Certificate, CreateCertificateInput } from "./certificate.dto";
+import type { Certificate as PrismaCertificate } from '@prisma/client';
 
-type CertificateRow = {
-  id: number;
+import { prisma } from '../../config/prisma';
+import type { Certificate, CreateCertificateInput } from './certificate.dto';
 
-  nama_mahasiswa: string;
-  nim: string;
-  email_mahasiswa: string;
-  program_studi: string;
-  fakultas: string;
-  tahun_masuk: number;
-  tahun_lulus: number;
-  nomor_ijazah: string;
-  tanggal_terbit_ijazah: string;
+function toDate(value: string): Date {
+  return new Date(`${value}T00:00:00.000Z`);
+}
 
-  cid: string;
-  file_name: string | null;
-  mime_type: string | null;
-  file_size: string | number | null;
+function formatDateOnly(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
 
-  ledger_tx_id: string;
-  status: "VALID" | "REVOKED";
+function formatDateTime(value: Date): string {
+  return value.toISOString();
+}
 
-  created_at: string;
-  updated_at: string;
-};
-
-function mapCertificateRow(row: CertificateRow): Certificate {
+function mapCertificate(row: PrismaCertificate): Certificate {
   return {
-    ...row,
-    file_size: row.file_size === null ? null : Number(row.file_size),
+    id: row.id,
+    certificateId: row.certificateId,
+    certificateNumber: row.certificateNumber,
+    issuerId: row.issuerId,
+    certificateType: row.certificateType,
+    title: row.title,
+    studentIdHash: row.studentIdHash,
+    documentHash: row.documentHash,
+    ipfsCid: row.ipfsCid,
+    file_name: row.fileName,
+    mime_type: row.mimeType,
+    file_size: row.fileSize === null ? null : Number(row.fileSize),
+    ledger_tx_id: row.ledgerTxId,
+    status: row.status,
+    issuedAt: formatDateTime(row.issuedAt),
+    expiredAt: row.expiredAt ? formatDateTime(row.expiredAt) : null,
+    previousCertificateId: row.previousCertificateId,
+    replacementCertificateId: row.replacementCertificateId,
+    created_at: formatDateTime(row.createdAt),
+    updated_at: formatDateTime(row.updatedAt),
   };
 }
 
 export async function insertCertificate(
   data: CreateCertificateInput
 ): Promise<Certificate> {
-  const query = `
-    INSERT INTO certificates (
-      nama_mahasiswa,
-      nim,
-      email_mahasiswa,
-      program_studi,
-      fakultas,
-      tahun_masuk,
-      tahun_lulus,
-      nomor_ijazah,
-      tanggal_terbit_ijazah,
-      cid,
-      file_name,
-      mime_type,
-      file_size,
-      ledger_tx_id,
-      status
-    )
-    VALUES (
-      $1, $2, $3, $4, $5,
-      $6, $7, $8, $9, $10,
-      $11, $12, $13, $14, $15
-    )
-    RETURNING
-      id,
-      nama_mahasiswa,
-      nim,
-      email_mahasiswa,
-      program_studi,
-      fakultas,
-      tahun_masuk,
-      tahun_lulus,
-      nomor_ijazah,
-      tanggal_terbit_ijazah::TEXT,
-      cid,
-      file_name,
-      mime_type,
-      file_size,
-      ledger_tx_id,
-      status,
-      created_at::TEXT,
-      updated_at::TEXT;
-  `;
+  const issuer = await prisma.issuer.upsert({
+    where: { issuerId: data.issuerId },
+    update: {},
+    create: {
+      issuerId: data.issuerId,
+      organizationName: data.organizationName,
+      departmentName: data.departmentName,
+      mspId: data.mspId,
+    },
+  });
 
-  const values = [
-    data.nama_mahasiswa,
-    data.nim,
-    data.email_mahasiswa,
-    data.program_studi,
-    data.fakultas,
-    data.tahun_masuk,
-    data.tahun_lulus,
-    data.nomor_ijazah,
-    data.tanggal_terbit_ijazah,
-    data.cid,
-    data.file_name,
-    data.mime_type,
-    data.file_size,
-    data.ledger_tx_id,
-    data.status,
-  ];
+  const certificate = await prisma.certificate.create({
+    data: {
+      certificateId: data.certificateId,
+      certificateNumber: data.certificateNumber,
+      issuerId: issuer.issuerId,
+      certificateType: data.certificateType,
+      title: data.title,
+      studentIdHash: data.studentIdHash,
+      documentHash: data.documentHash,
+      ipfsCid: data.ipfsCid,
+      fileName: data.file_name,
+      mimeType: data.mime_type,
+      fileSize: data.file_size,
+      ledgerTxId: data.ledger_tx_id,
+      status: data.status,
+      issuedAt: toDate(data.issuedAt),
+      expiredAt: data.expiredAt ? new Date(data.expiredAt) : null,
+      previousCertificateId: data.previousCertificateId ?? null,
+      replacementCertificateId: data.replacementCertificateId ?? null,
+    },
+  });
 
-  const result = await pool.query<CertificateRow>(query, values);
-
-  return mapCertificateRow(result.rows[0]);
+  return mapCertificate(certificate);
 }
 
-export async function findCertificateByNomorIjazah(
-  nomorIjazah: string
+export async function findCertificateByCertificateNumber(
+  certificateNumber: string
 ): Promise<Certificate | null> {
-  const query = `
-    SELECT
-      id,
-      nama_mahasiswa,
-      nim,
-      email_mahasiswa,
-      program_studi,
-      fakultas,
-      tahun_masuk,
-      tahun_lulus,
-      nomor_ijazah,
-      tanggal_terbit_ijazah::TEXT,
-      cid,
-      file_name,
-      mime_type,
-      file_size,
-      ledger_tx_id,
-      status,
-      created_at::TEXT,
-      updated_at::TEXT
-    FROM certificates
-    WHERE nomor_ijazah = $1
-    LIMIT 1;
-  `;
+  const certificate = await prisma.certificate.findUnique({
+    where: { certificateNumber },
+  });
 
-  const result = await pool.query<CertificateRow>(query, [nomorIjazah]);
-  const row = result.rows[0];
-
-  if (!row) {
-    return null;
-  }
-
-  return mapCertificateRow(row);
+  return certificate ? mapCertificate(certificate) : null;
 }
 
 export async function findAllCertificates(): Promise<Certificate[]> {
-  const query = `
-    SELECT
-      id,
-      nama_mahasiswa,
-      nim,
-      email_mahasiswa,
-      program_studi,
-      fakultas,
-      tahun_masuk,
-      tahun_lulus,
-      nomor_ijazah,
-      tanggal_terbit_ijazah::TEXT,
-      cid,
-      file_name,
-      mime_type,
-      file_size,
-      ledger_tx_id,
-      status,
-      created_at::TEXT,
-      updated_at::TEXT
-    FROM certificates
-    ORDER BY created_at DESC;
-  `;
+  const certificates = await prisma.certificate.findMany({
+    orderBy: { createdAt: 'desc' },
+  });
 
-  const result = await pool.query<CertificateRow>(query);
-
-  return result.rows.map(mapCertificateRow);
+  return certificates.map(mapCertificate);
 }

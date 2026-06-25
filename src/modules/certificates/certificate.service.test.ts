@@ -15,18 +15,27 @@ type Call = {
 function createMockGateway(results: Record<string, unknown> = {}): { gateway: FabricGateway; calls: Call[] } {
   const calls: Call[] = [];
 
+  function readResult(functionName: string): unknown {
+    return results[functionName] ?? results[functionName.replace('SmartContract:', '')] ?? null;
+  }
+
   return {
     calls,
     gateway: {
       async evaluateTransaction(functionName: string, ...args: string[]): Promise<unknown> {
         calls.push({ mode: 'evaluate', functionName, args });
 
-        return results[functionName] ?? null;
+        return readResult(functionName);
       },
       async submitTransaction(functionName: string, ...args: string[]): Promise<unknown> {
         calls.push({ mode: 'submit', functionName, args });
 
-        return results[functionName] ?? null;
+        return readResult(functionName);
+      },
+      async submitTransactionWithTxId(functionName: string, ...args: string[]): Promise<{ transactionId: string; result: unknown }> {
+        calls.push({ mode: 'submit', functionName, args });
+
+        return { transactionId: 'mock-tx-id', result: readResult(functionName) };
       }
     }
   };
@@ -47,7 +56,7 @@ describe('certificate lifecycle chaincode mapping', () => {
     assert.deepEqual(calls, [
       {
         mode: 'submit',
-        functionName: 'RegisterIssuer',
+        functionName: 'SmartContract:RegisterIssuer',
         args: ['DEMO_ISSUER', 'Demo University', 'Academic Office', 'Org1MSP']
       }
     ]);
@@ -74,7 +83,7 @@ describe('certificate lifecycle chaincode mapping', () => {
     assert.deepEqual(calls, [
       {
         mode: 'submit',
-        functionName: 'IssueCertificate',
+        functionName: 'SmartContract:IssueCertificate',
         args: [
           'CERT-001',
           'NO-001',
@@ -97,6 +106,9 @@ describe('certificate lifecycle chaincode mapping', () => {
         return null;
       },
       async submitTransaction(): Promise<unknown> {
+        throw new Error('issuer UNKNOWN does not exist');
+      },
+      async submitTransactionWithTxId(): Promise<{ transactionId: string; result: unknown }> {
         throw new Error('issuer UNKNOWN does not exist');
       }
     };
@@ -140,7 +152,7 @@ describe('certificate lifecycle chaincode mapping', () => {
     assert.deepEqual(calls, [
       {
         mode: 'evaluate',
-        functionName: 'VerifyCertificate',
+        functionName: 'SmartContract:VerifyCertificate',
         args: ['CERT-001', 'doc-hash']
       }
     ]);
@@ -179,7 +191,7 @@ describe('certificate lifecycle chaincode mapping', () => {
     assert.deepEqual(calls, [
       {
         mode: 'submit',
-        functionName: 'RevokeCertificate',
+        functionName: 'SmartContract:RevokeCertificate',
         args: ['CERT-001', sha256Hex('typed revocation reason'), '2026-06-18T01:00:00Z']
       }
     ]);
@@ -222,7 +234,7 @@ describe('certificate lifecycle chaincode mapping', () => {
     assert.deepEqual(calls, [
       {
         mode: 'submit',
-        functionName: 'ReissueCertificate',
+        functionName: 'SmartContract:ReissueCertificate',
         args: ['CERT-001', 'CERT-002', 'NO-002', 'new-doc-hash', 'bafy-new', 'reason-hash', '2026-06-18T02:00:00Z']
       }
     ]);
@@ -240,6 +252,9 @@ describe('certificate lifecycle chaincode mapping', () => {
       },
       async submitTransaction(): Promise<unknown> {
         return null;
+      },
+      async submitTransactionWithTxId(): Promise<{ transactionId: string; result: unknown }> {
+        return { transactionId: 'mock-tx-id', result: null };
       }
     };
     const service = createCertificateService(gateway);
@@ -247,8 +262,8 @@ describe('certificate lifecycle chaincode mapping', () => {
     assert.equal(await service.getCertificate('CERT-001'), oldCertificate);
     assert.equal(await service.getCertificate('CERT-002'), newCertificate);
     assert.deepEqual(calls, [
-      { mode: 'evaluate', functionName: 'GetCertificate', args: ['CERT-001'] },
-      { mode: 'evaluate', functionName: 'GetCertificate', args: ['CERT-002'] }
+      { mode: 'evaluate', functionName: 'SmartContract:GetCertificate', args: ['CERT-001'] },
+      { mode: 'evaluate', functionName: 'SmartContract:GetCertificate', args: ['CERT-002'] }
     ]);
   });
 });

@@ -9,6 +9,11 @@ import { createIdentity, createSigner } from './fabric-identity';
 import type { FabricResult } from './fabric-result';
 import { decodeFabricResult } from './fabric-result';
 
+export type FabricSubmitResult = {
+  readonly transactionId: string;
+  readonly result: FabricResult;
+};
+
 export class FabricGatewayClient {
   private gateway?: Gateway;
   private grpcClient?: grpc.Client;
@@ -27,6 +32,24 @@ export class FabricGatewayClient {
     const result = await contract.submitTransaction(functionName, ...args);
 
     return decodeFabricResult(result);
+  }
+
+  public async submitTransactionWithTxId(
+    functionName: string,
+    args: readonly string[] = []
+  ): Promise<FabricSubmitResult> {
+    const contract = await this.getContract();
+    const submittedTransaction = await contract.submitAsync(functionName, { arguments: [...args] });
+    const status = await submittedTransaction.getStatus();
+
+    if (!status.successful) {
+      throw new Error(`transaction ${status.transactionId} failed with status code ${status.code}`);
+    }
+
+    return {
+      transactionId: submittedTransaction.getTransactionId(),
+      result: decodeFabricResult(submittedTransaction.getResult())
+    };
   }
 
   public close(): void {
