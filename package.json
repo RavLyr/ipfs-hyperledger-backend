@@ -3,12 +3,17 @@
   "version": "1.0.0",
   "description": "Express TypeScript backend for Hyperledger Fabric Gateway access",
   "main": "dist/main.js",
+  "packageManager": "pnpm@11.9.0",
   "scripts": {
     "dev": "tsx src/main.ts",
     "build": "tsc",
-    "test": "tsx --test \"src/**/*.test.ts\"",
+    "test": "FABRIC_CHANNEL_NAME=appchannel-etcdraft FABRIC_CHAINCODE_NAME=ijazah FABRIC_MSP_ID=Org1MSP FABRIC_PEER_ENDPOINT=localhost:7051 FABRIC_PEER_TLS_HOST_OVERRIDE=peer1org1.example.com FABRIC_TLS_CERT_PATH=/tmp/tls-ca.pem FABRIC_CLIENT_CERT_PATH=/tmp/client-cert.pem FABRIC_CLIENT_KEY_PATH=/tmp/client-key.pem DATABASE_URL=postgresql://postgres:password@localhost:5433/ipfs_hyperledger_db?schema=public tsx --test \"src/**/*.test.ts\"",
     "start": "node dist/main.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:studio": "prisma studio"
   },
   "keywords": [
     "express",
@@ -21,6 +26,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",
     "@hyperledger/fabric-gateway": "^1.8.0",
+    "@prisma/client": "^6.19.3",
     "axios": "^1.18.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -36,6 +42,7 @@
     "@types/multer": "^2.1.0",
     "@types/node": "^22.13.1",
     "@types/pg": "^8.20.0",
+    "prisma": "^6.19.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }

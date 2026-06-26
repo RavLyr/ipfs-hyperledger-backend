@@ -13,6 +13,7 @@ import { certificateService,
     getAllCertificatesService,
     uploadCertificate,
     verifyCertificateService   , } from './certificate.service';
+import { getIPFSGatewayUrl } from '../../infrastructure/ipfs/ipfs.service';
 
 export async function initLedger(_req: Request, res: Response): Promise<void> {
   const result = await certificateService.initLedger();
@@ -132,11 +133,12 @@ export async function uploadCertificateController(
   res: Response
 ): Promise<void> {
   const certificate = await uploadCertificate(req.body, req.file);
+  const { documentHash, ...cleanData } = certificate;
 
   res.status(201).json({
     success: true,
     message: "Certificate uploaded successfully",
-    data: certificate,
+    data: cleanData,
   });
 }
 
@@ -145,25 +147,50 @@ type VerifyCertificateParams = {
 };
 
 export async function verifyCertificateController(
-  req: Request<VerifyCertificateParams>,
+  req: Request,
   res: Response
 ): Promise<void> {
-  const certificate = await verifyCertificateService(req.params.nomorIjazah);
+  const nomorIjazah = typeof req.params.nomorIjazah === 'string' ? req.params.nomorIjazah : '';
+  const certificate = await verifyCertificateService(nomorIjazah);
 
   if (!certificate) {
     res.json({
       success: true,
       valid: false,
+      message: 'Certificate not found in database',
       data: null,
     });
     return;
   }
 
-  res.json({
-    success: true,
-    valid: true,
-    data: certificate,
-  });
+  try {
+    // 3. Verify on Ledger using certificateId and ipfsCid retrieved from DB
+    const ledgerResult = await certificateService.verifyCertificate({
+      certificateId: certificate.certificateId,
+      documentHash: certificate.ipfsCid, // Using stored ipfsCid to verify
+    }) as any;
+
+    const valid = ledgerResult && ledgerResult.valid === true;
+    const { documentHash, ...cleanDbData } = certificate;
+
+    // 4. Respond with ledger status, DB metadata, and IPFS document URL if valid
+    res.json({
+      success: true,
+      valid,
+      message: ledgerResult ? ledgerResult.message : 'Ledger verification failed',
+      ledgerData: ledgerResult,
+      dbData: cleanDbData,
+      documentUrl: valid ? getIPFSGatewayUrl(certificate.ipfsCid) : null,
+    });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Verification failed';
+    res.status(502).json({
+      success: false,
+      valid: false,
+      message: `Ledger verification error: ${errorMessage}`,
+      data: null,
+    });
+  }
 }
 
 export async function getAllCertificatesController(

@@ -1,5 +1,5 @@
 import { fabricConfig } from '../../config/fabric.config';
-import { FabricGatewayClient } from '../../infrastructure/fabric/fabric-gateway.client';
+import { FabricGatewayClient, type FabricSubmitResult } from '../../infrastructure/fabric/fabric-gateway.client';
 import type { FabricResult } from '../../infrastructure/fabric/fabric-result';
 import type { InvokeFabricBody } from './fabric.dto';
 import type { FabricHealth, FabricInvokeResult } from './fabric.types';
@@ -35,6 +35,13 @@ export async function evaluateTransaction(functionName: string, ...args: string[
 
 export async function submitTransaction(functionName: string, ...args: string[]): Promise<FabricResult> {
   return fabricClient.submitTransaction(functionName, args);
+}
+
+export async function submitTransactionWithTxId(
+  functionName: string,
+  ...args: string[]
+): Promise<FabricSubmitResult> {
+  return fabricClient.submitTransactionWithTxId(functionName, args);
 }
 
 export function closeFabricClient(): void {

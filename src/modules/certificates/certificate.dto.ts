@@ -223,43 +223,46 @@ export type CertificateStatus = "VALID" | "REVOKED";
 
 export interface Certificate {
   id: number;
-
-  nama_mahasiswa: string;
-  nim: string;
-  email_mahasiswa: string;
-  program_studi: string;
-  fakultas: string;
-  tahun_masuk: number;
-  tahun_lulus: number;
-  nomor_ijazah: string;
-  tanggal_terbit_ijazah: string;
-
-  cid: string;
+  certificateId: string;
+  certificateNumber: string;
+  issuerId: string;
+  certificateType: string;
+  title: string;
+  studentIdHash: string;
+  documentHash: string;
+  ipfsCid: string;
   file_name: string | null;
   mime_type: string | null;
   file_size: number | null;
-
   ledger_tx_id: string;
   status: CertificateStatus;
-
+  issuedAt: string;
+  expiredAt: string | null;
+  previousCertificateId: string | null;
+  replacementCertificateId: string | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface CertificateTextInput {
-  nama_mahasiswa: string;
-  nim: string;
-  email_mahasiswa: string;
-  program_studi: string;
-  fakultas: string;
-  tahun_masuk: number;
-  tahun_lulus: number;
-  nomor_ijazah: string;
-  tanggal_terbit_ijazah: string;
+  certificateId: string;
+  certificateNumber: string;
+  issuerId: string;
+  organizationName: string;
+  departmentName: string;
+  mspId: string;
+  certificateType: string;
+  title: string;
+  studentIdHash: string;
+  documentHash: string;
+  issuedAt: string;
+  expiredAt: string;
+  previousCertificateId?: string;
+  replacementCertificateId?: string;
 }
 
 export interface CreateCertificateInput extends CertificateTextInput {
-  cid: string;
+  ipfsCid: string;
   file_name: string;
   mime_type: string;
   file_size: number;

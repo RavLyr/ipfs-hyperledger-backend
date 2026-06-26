@@ -1,0 +1,121 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ipfs_hyperledger_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    ports:
+      - "127.0.0.1:${POSTGRES_LOCAL_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app
+
+  ipfs:
+    image: ipfs/kubo:v0.32.1
+    restart: unless-stopped
+    ports:
+      - "${IPFS_GATEWAY_PORT:-8080}:8080"      # Gateway (public)
+      # - "127.0.0.1:5001:5001"                # API (uncomment for host debugging)
+      # - "4001:4001"                           # Swarm (uncomment for public IPFS network)
+    volumes:
+      - ${DATA_ROOT:-./.docker-data}/ipfs:/data/ipfs
+      - ${DATA_ROOT:-./.docker-data}/ipfs-staging:/export
+    healthcheck:
+      test: ["CMD-SHELL", "ipfs id >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - app
+
+  migrate:
+    image: ipfs-hyperledger-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      network: host
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:-ipfs_hyperledger_db}?schema=public
+    # Override CMD: run as root so prisma CLI works (no binaries in prod-deps)
+    user: "0"
+    command: >
+      sh -c "
+        npx prisma migrate deploy --schema ./prisma/schema.prisma &&
+        echo '✅ Migrations applied successfully'
+      "
+    networks:
+      - app
+
+  backend:
+    image: ipfs-hyperledger-backend:latest   # Reuses image built by migrate — no double build
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ipfs:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3000}
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:-ipfs_hyperledger_db}?schema=public
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_NAME: ${DB_NAME:-ipfs_hyperledger_db}
+      IPFS_API_URL: http://ipfs:5001
+      IPFS_GATEWAY_URL: ${IPFS_GATEWAY_URL:-http://localhost:8080}
+      FABRIC_CHANNEL_NAME: ${FABRIC_CHANNEL_NAME:-appchannel-etcdraft}
+      FABRIC_CHAINCODE_NAME: ${FABRIC_CHAINCODE_NAME:-ijazah}
+      FABRIC_MSP_ID: ${FABRIC_MSP_ID:-Org1MSP}
+      FABRIC_PEER_ENDPOINT: ${FABRIC_PEER_ENDPOINT:-peer1org1.example.com:7051}
+      FABRIC_PEER_TLS_HOST_OVERRIDE: ${FABRIC_PEER_TLS_HOST_OVERRIDE:-peer1org1.example.com}
+      FABRIC_TLS_CERT_PATH: ${FABRIC_TLS_CERT_PATH:-/fabric-crypto/peerOrganizations/org1.example.com/peers/peer1.org1.ravly.com/tls/cacerts/localhost-7054.pem}
+      FABRIC_CLIENT_CERT_PATH: ${FABRIC_CLIENT_CERT_PATH:-/fabric-crypto/peerOrganizations/org1.example.com/peers/peer0.org1.ravly.com/msp/signcerts/org1-admin-cert.pem}
+      FABRIC_CLIENT_KEY_PATH: ${FABRIC_CLIENT_KEY_PATH:-/fabric-crypto/peerOrganizations/org1.example.com/peers/peer0.org1.ravly.com/msp/keystore/org1-admin-key.pem}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - ${FABRIC_CRYPTO_HOST_PATH:-./blockchain/organization}:/fabric-crypto:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - app
+      - fabric
+
+networks:
+  app:
+    driver: bridge
+  fabric:
+    external: true
+    name: ${FABRIC_DOCKER_NETWORK:-fabric_migration_net}
+
+volumes:
+  postgres_data:

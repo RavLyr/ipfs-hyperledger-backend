@@ -39,12 +39,12 @@ certificateRoutes.get('/certificates/:certificateId/history', asyncHandler(certi
 certificateRoutes.post(
   "/upload",
   upload.single("file_ijazah"),
-  uploadCertificateController
+  asyncHandler(uploadCertificateController)
 );
 
 certificateRoutes.get(
   "/verify/:nomorIjazah",
-  verifyCertificateController
+  asyncHandler(verifyCertificateController)
 );
 
-certificateRoutes.get("/", getAllCertificatesController);
+certificateRoutes.get("/", asyncHandler(getAllCertificatesController));

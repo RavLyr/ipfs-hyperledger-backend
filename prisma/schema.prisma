@@ -1,0 +1,118 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CertificateStatus {
+  VALID
+  REVOKED
+}
+
+enum IssuerStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum FabricTransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+model Issuer {
+  id                 Int                 @id @default(autoincrement())
+  issuerId           String              @unique @map("issuer_id")
+  organizationName   String              @map("organization_name")
+  departmentName     String              @map("department_name")
+  mspId              String              @map("msp_id")
+  status             IssuerStatus        @default(ACTIVE)
+  ledgerTxId         String?             @map("ledger_tx_id")
+  registeredAt       DateTime            @default(now()) @map("registered_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  createdAt          DateTime            @default(now()) @map("created_at")
+
+  certificates       Certificate[]
+  revocations        Revocation[]
+  fabricTransactions FabricTransaction[]
+
+  @@map("issuers")
+}
+
+model Certificate {
+  id                       Int                 @id @default(autoincrement())
+  certificateId            String              @unique @map("certificate_id")
+  certificateNumber        String              @unique @map("certificate_number")
+  issuerId                 String              @map("issuer_id")
+  certificateType          String              @map("certificate_type")
+  title                    String
+  studentIdHash            String              @map("student_id_hash")
+  documentHash             String              @map("document_hash")
+  ipfsCid                  String              @map("ipfs_cid")
+  fileName                 String?             @map("file_name")
+  mimeType                 String?             @map("mime_type")
+  fileSize                 BigInt?             @map("file_size")
+  ledgerTxId               String              @map("ledger_tx_id")
+  status                   CertificateStatus   @default(VALID)
+  issuedAt                 DateTime            @map("issued_at")
+  expiredAt                DateTime?           @map("expired_at")
+  previousCertificateId    String?             @map("previous_certificate_id")
+  replacementCertificateId String?             @map("replacement_certificate_id")
+  createdAt                DateTime            @default(now()) @map("created_at")
+  updatedAt                DateTime            @updatedAt @map("updated_at")
+
+  issuer                   Issuer              @relation(fields: [issuerId], references: [issuerId], onUpdate: Cascade, onDelete: Restrict)
+  revocation               Revocation?
+  fabricTransactions       FabricTransaction[]
+
+  @@index([issuerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("certificates")
+}
+
+model Revocation {
+  id             Int         @id @default(autoincrement())
+  revocationId   String      @unique @map("revocation_id")
+  certificateId  String      @unique @map("certificate_id")
+  issuerId       String      @map("issuer_id")
+  reasonHash     String      @map("reason_hash")
+  ledgerTxId     String      @map("ledger_tx_id")
+  revokedAt      DateTime    @map("revoked_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  certificate    Certificate @relation(fields: [certificateId], references: [certificateId], onUpdate: Cascade, onDelete: Restrict)
+  issuer         Issuer      @relation(fields: [issuerId], references: [issuerId], onUpdate: Cascade, onDelete: Restrict)
+
+  @@index([issuerId])
+  @@map("revocations")
+}
+
+model FabricTransaction {
+  id             Int                     @id @default(autoincrement())
+  txId           String?                 @unique @map("tx_id")
+  channelName    String                  @map("channel_name")
+  chaincodeName  String                  @map("chaincode_name")
+  functionName   String                  @map("function_name")
+  status         FabricTransactionStatus @default(PENDING)
+  certificateId  String?                 @map("certificate_id")
+  issuerId       String?                 @map("issuer_id")
+  payloadJson    Json?                   @map("payload_json")
+  resultJson     Json?                   @map("result_json")
+  errorMessage   String?                 @map("error_message")
+  createdAt      DateTime                @default(now()) @map("created_at")
+  updatedAt      DateTime                @updatedAt @map("updated_at")
+
+  certificate    Certificate?            @relation(fields: [certificateId], references: [certificateId], onUpdate: Cascade, onDelete: SetNull)
+  issuer         Issuer?                 @relation(fields: [issuerId], references: [issuerId], onUpdate: Cascade, onDelete: SetNull)
+
+  @@index([certificateId])
+  @@index([issuerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("fabric_transactions")
+}

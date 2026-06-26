@@ -1,23 +1,60 @@
+import { randomUUID } from 'node:crypto';
+
 import { AppError } from '../../errors/AppError';
 import type { FabricResult } from '../../infrastructure/fabric/fabric-result';
-import { evaluateTransaction, submitTransaction } from '../fabric/fabric.service';
+import { uploadToIPFS } from '../../infrastructure/ipfs/ipfs.service';
+import { sha256Hex } from '../../utils/hash';
+import { evaluateTransaction, submitTransaction, submitTransactionWithTxId } from '../fabric/fabric.service';
 import type {
+  Certificate,
+  CertificateTextInput,
   IssueCertificateInput,
   RegisterIssuerInput,
   ReissueCertificateInput,
   RevokeCertificateInput,
   VerifyCertificateInput
 } from './certificate.dto';
+import {
+  findAllCertificates,
+  findCertificateByCertificateNumber,
+  insertCertificate,
+} from './certificate.repository';
 
 export type FabricGateway = {
   readonly evaluateTransaction: (functionName: string, ...args: string[]) => Promise<FabricResult>;
   readonly submitTransaction: (functionName: string, ...args: string[]) => Promise<FabricResult>;
+  readonly submitTransactionWithTxId: (
+    functionName: string,
+    ...args: string[]
+  ) => Promise<{ readonly transactionId: string; readonly result: FabricResult }>;
 };
 
 const defaultGateway: FabricGateway = {
   evaluateTransaction,
-  submitTransaction
+  submitTransaction,
+  submitTransactionWithTxId
 };
+
+const REQUIRED_UPLOAD_FIELDS = [
+  'certificateNumber',
+  'issuerId',
+  'organizationName',
+  'departmentName',
+  'mspId',
+  'certificateType',
+  'title',
+  'issuedAt',
+] as const;
+
+type RawBody = Record<string, unknown>;
+
+function chaincodeFunction(name: string): string {
+  return `SmartContract:${name}`;
+}
+
+function isTrueFabricResult(result: FabricResult): boolean {
+  return result === true || result === 'true';
+}
 
 function mapFabricError(err: unknown): never {
   if (err instanceof AppError) {
@@ -60,13 +97,13 @@ async function runFabric<T>(operation: () => Promise<T>): Promise<T> {
 export function createCertificateService(gateway: FabricGateway = defaultGateway) {
   return {
     initLedger(): Promise<FabricResult> {
-      return runFabric(() => gateway.submitTransaction('InitLedger'));
+      return runFabric(() => gateway.submitTransaction(chaincodeFunction('InitLedger')));
     },
 
     registerIssuer(input: RegisterIssuerInput): Promise<FabricResult> {
       return runFabric(() =>
         gateway.submitTransaction(
-          'RegisterIssuer',
+          chaincodeFunction('RegisterIssuer'),
           input.issuerId,
           input.organizationName,
           input.departmentName,
@@ -76,17 +113,37 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
     },
 
     getIssuer(issuerId: string): Promise<FabricResult> {
-      return runFabric(() => gateway.evaluateTransaction('GetIssuer', issuerId));
+      return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetIssuer'), issuerId));
     },
 
     issuerExists(issuerId: string): Promise<FabricResult> {
-      return runFabric(() => gateway.evaluateTransaction('IssuerExists', issuerId));
+      return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('IssuerExists'), issuerId));
     },
 
     issueCertificate(input: IssueCertificateInput): Promise<FabricResult> {
       return runFabric(() =>
         gateway.submitTransaction(
-          'IssueCertificate',
+          chaincodeFunction('IssueCertificate'),
+          input.certificateId,
+          input.certificateNumber,
+          input.studentIdHash,
+          input.issuerId,
+          input.certificateType,
+          input.title,
+          input.documentHash,
+          input.ipfsCid,
+          input.issuedAt,
+          input.expiredAt
+        )
+      );
+    },
+
+    issueCertificateWithTxId(
+      input: IssueCertificateInput
+    ): Promise<{ readonly transactionId: string; readonly result: FabricResult }> {
+      return runFabric(() =>
+        gateway.submitTransactionWithTxId(
+          chaincodeFunction('IssueCertificate'),
           input.certificateId,
           input.certificateNumber,
           input.studentIdHash,
@@ -102,33 +159,33 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
     },
 
     getCertificate(certificateId: string): Promise<FabricResult> {
-      return runFabric(() => gateway.evaluateTransaction('GetCertificate', certificateId));
+      return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetCertificate'), certificateId));
     },
 
     certificateExists(certificateId: string): Promise<FabricResult> {
-      return runFabric(() => gateway.evaluateTransaction('CertificateExists', certificateId));
+      return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('CertificateExists'), certificateId));
     },
 
     verifyCertificate(input: VerifyCertificateInput): Promise<FabricResult> {
       return runFabric(() =>
-        gateway.evaluateTransaction('VerifyCertificate', input.certificateId, input.documentHash)
+        gateway.evaluateTransaction(chaincodeFunction('VerifyCertificate'), input.certificateId, input.documentHash)
       );
     },
 
     revokeCertificate(input: RevokeCertificateInput): Promise<FabricResult> {
       return runFabric(() =>
-        gateway.submitTransaction('RevokeCertificate', input.certificateId, input.reasonHash, input.revokedAt)
+        gateway.submitTransaction(chaincodeFunction('RevokeCertificate'), input.certificateId, input.reasonHash, input.revokedAt)
       );
     },
 
     getRevocationInfo(certificateId: string): Promise<FabricResult> {
-      return runFabric(() => gateway.evaluateTransaction('GetRevocationInfo', certificateId));
+      return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetRevocationInfo'), certificateId));
     },
 
     reissueCertificate(input: ReissueCertificateInput): Promise<FabricResult> {
       return runFabric(() =>
         gateway.submitTransaction(
-          'ReissueCertificate',
+          chaincodeFunction('ReissueCertificate'),
           input.oldCertificateId,
           input.newCertificateId,
           input.newCertificateNumber,
@@ -141,162 +198,152 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
     },
 
     getCertificateHistory(certificateId: string): Promise<FabricResult> {
-      return runFabric(() => gateway.evaluateTransaction('GetCertificateHistory', certificateId));
+      return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetCertificateHistory'), certificateId));
     },
 
     getAllCertificates(): Promise<FabricResult> {
-      return runFabric(() => gateway.evaluateTransaction('GetAllCertificates'));
+      return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetAllCertificates')));
     },
 
     getCertificatesByIssuer(issuerId: string): Promise<FabricResult> {
-      return runFabric(() => gateway.evaluateTransaction('GetCertificatesByIssuer', issuerId));
+      return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetCertificatesByIssuer'), issuerId));
     }
   };
 }
 
 export const certificateService = createCertificateService();
 
-import { uploadToIPFS } from "../../infrastructure/ipfs/ipfs.service";
-import {
-  findAllCertificates,
-  findCertificateByNomorIjazah,
-  insertCertificate,
-} from "./certificate.repository";
-import type { Certificate, CertificateTextInput } from "./certificate.dto";
-
-const REQUIRED_FIELDS = [
-  "nama_mahasiswa",
-  "nim",
-  "email_mahasiswa",
-  "program_studi",
-  "fakultas",
-  "tahun_masuk",
-  "tahun_lulus",
-  "nomor_ijazah",
-  "tanggal_terbit_ijazah",
-] as const;
-
-type RawBody = Record<string, unknown>;
-
 export async function uploadCertificate(
   body: RawBody,
   file: Express.Multer.File | undefined
 ): Promise<Certificate> {
-  const input = validateCertificateBody(body);
-
   if (!file) {
-    throw new Error("file_ijazah is required");
+    throw new Error('file_ijazah is required');
   }
 
-  const existingCertificate = await findCertificateByNomorIjazah(
-    input.nomor_ijazah
-  );
+  const input = validateCertificateBody(body, file.buffer);
+  const existingCertificate = await findCertificateByCertificateNumber(input.certificateNumber);
 
   if (existingCertificate) {
-    throw new Error(`nomor_ijazah already exists: ${input.nomor_ijazah}`);
+    throw new Error(`certificateNumber already exists: ${input.certificateNumber}`);
   }
 
-  const cid = await uploadToIPFS(file.buffer, file.originalname);
+  const ipfsCid = await uploadToIPFS(file.buffer, file.originalname);
+  const issuerExists = await certificateService.issuerExists(input.issuerId);
 
-  const savedCertificate = await insertCertificate({
+  if (!isTrueFabricResult(issuerExists)) {
+    await certificateService.registerIssuer({
+      issuerId: input.issuerId,
+      organizationName: input.organizationName,
+      departmentName: input.departmentName,
+      mspId: input.mspId,
+    });
+  }
+
+  const fabricTransaction = await certificateService.issueCertificateWithTxId({
+    certificateId: input.certificateId,
+    certificateNumber: input.certificateNumber,
+    studentIdHash: input.studentIdHash,
+    issuerId: input.issuerId,
+    certificateType: input.certificateType,
+    title: input.title,
+    documentHash: ipfsCid, // Treat ipfsCid as the documentHash
+    ipfsCid,
+    issuedAt: input.issuedAt,
+    expiredAt: input.expiredAt,
+  });
+
+  return insertCertificate({
     ...input,
-    cid,
+    documentHash: ipfsCid, // Treat ipfsCid as the documentHash
+    ipfsCid,
     file_name: file.originalname,
     mime_type: file.mimetype,
     file_size: file.size,
-    ledger_tx_id: "PENDING_CHAINCODE",
-    status: "VALID",
+    ledger_tx_id: fabricTransaction.transactionId,
+    status: 'VALID',
   });
-
-  return savedCertificate;
 }
 
 export async function verifyCertificateService(
-  nomorIjazah: string
+  certificateNumber: string
 ): Promise<Certificate | null> {
-  const cleanNomorIjazah = nomorIjazah.trim();
+  const cleanCertificateNumber = certificateNumber.trim();
 
-  if (!cleanNomorIjazah) {
-    throw new Error("nomor_ijazah is required");
+  if (!cleanCertificateNumber) {
+    throw new Error('certificateNumber is required');
   }
 
-  return findCertificateByNomorIjazah(cleanNomorIjazah);
+  return findCertificateByCertificateNumber(cleanCertificateNumber);
 }
 
 export async function getAllCertificatesService(): Promise<Certificate[]> {
   return findAllCertificates();
 }
 
-function validateCertificateBody(body: RawBody): CertificateTextInput {
-  const missingFields = REQUIRED_FIELDS.filter((field) => {
+function validateCertificateBody(body: RawBody, fileBuffer: Buffer): CertificateTextInput {
+  const missingFields = REQUIRED_UPLOAD_FIELDS.filter((field) => {
     const value = body[field];
-    return typeof value !== "string" || value.trim() === "";
+    return typeof value !== 'string' || value.trim() === '';
   });
 
   if (missingFields.length > 0) {
-    throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
   }
 
-  const nama_mahasiswa = clean(body.nama_mahasiswa);
-  const nim = clean(body.nim);
-  const email_mahasiswa = clean(body.email_mahasiswa);
-  const program_studi = clean(body.program_studi);
-  const fakultas = clean(body.fakultas);
-  const nomor_ijazah = clean(body.nomor_ijazah);
-  const tanggal_terbit_ijazah = clean(body.tanggal_terbit_ijazah);
+  const issuedAt = clean(body.issuedAt);
+  const expiredAt = clean(body.expiredAt);
+  const studentIdHash = readHashOrRaw(body, 'studentIdHash', 'studentId');
+  const documentHash = clean(body.documentHash) || sha256Hex(fileBuffer);
 
-  const tahun_masuk = parseYear(body.tahun_masuk, "tahun_masuk");
-  const tahun_lulus = parseYear(body.tahun_lulus, "tahun_lulus");
-
-  if (!isValidEmail(email_mahasiswa)) {
-    throw new Error("email_mahasiswa format is invalid");
+  if (!studentIdHash) {
+    throw new Error('studentIdHash is required, or provide studentId so backend can hash it');
   }
 
-  if (tahun_lulus < tahun_masuk) {
-    throw new Error("tahun_lulus cannot be smaller than tahun_masuk");
+  if (!isValidDateOnly(issuedAt)) {
+    throw new Error('issuedAt must use YYYY-MM-DD format');
   }
 
-  if (!isValidDateOnly(tanggal_terbit_ijazah)) {
-    throw new Error("tanggal_terbit_ijazah must use YYYY-MM-DD format");
+  if (expiredAt && !isValidDateOnly(expiredAt)) {
+    throw new Error('expiredAt must use YYYY-MM-DD format');
   }
 
   return {
-    nama_mahasiswa,
-    nim,
-    email_mahasiswa,
-    program_studi,
-    fakultas,
-    tahun_masuk,
-    tahun_lulus,
-    nomor_ijazah,
-    tanggal_terbit_ijazah,
+    certificateId: clean(body.certificateId) || randomUUID(),
+    certificateNumber: clean(body.certificateNumber),
+    issuerId: clean(body.issuerId),
+    organizationName: clean(body.organizationName),
+    departmentName: clean(body.departmentName),
+    mspId: clean(body.mspId),
+    certificateType: clean(body.certificateType),
+    title: clean(body.title),
+    studentIdHash,
+    documentHash,
+    issuedAt,
+    expiredAt,
+    previousCertificateId: clean(body.previousCertificateId) || undefined,
+    replacementCertificateId: clean(body.replacementCertificateId) || undefined,
   };
 }
 
 function clean(value: unknown): string {
-  if (typeof value !== "string") {
-    return "";
+  if (typeof value !== 'string') {
+    return '';
   }
 
   return value.trim();
 }
 
-function parseYear(value: unknown, fieldName: string): number {
-  const parsed = Number(clean(value));
+function readHashOrRaw(body: RawBody, hashField: string, rawField: string): string {
+  const hash = clean(body[hashField]);
 
-  if (!Number.isInteger(parsed)) {
-    throw new Error(`${fieldName} must be an integer`);
+  if (hash) {
+    return hash;
   }
 
-  if (parsed < 1900 || parsed > 2100) {
-    throw new Error(`${fieldName} is out of allowed range`);
-  }
+  const raw = clean(body[rawField]);
 
-  return parsed;
-}
-
-function isValidEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  return raw ? sha256Hex(raw) : '';
 }
 
 function isValidDateOnly(value: string): boolean {
