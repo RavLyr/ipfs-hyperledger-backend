@@ -1,194 +1,280 @@
-# Academic Certificate Fabric Gateway Backend
+# 🎓 Academic Certificate Blockchain & IPFS Gateway Backend
 
-Express TypeScript backend untuk Hyperledger Fabric Certificate Lifecycle Chaincode. Backend ini hanya mengirim metadata auditable ke ledger; PDF dan data mahasiswa sensitif tetap berada di backend/storage eksternal.
+An Express + TypeScript backend that connects the Frontend application with **Hyperledger Fabric (Blockchain)**, **IPFS (Decentralized Storage)**, and **PostgreSQL (Metadata Database)** to provide a secure, transparent, and tamper-resistant academic certificate verification system.
 
-## Scope Ledger
+---
 
-Ledger menyimpan:
+# 🏗️ System Architecture & Workflow
 
-- Issuer metadata
-- Certificate metadata
-- Revocation record
-- Reissue record
-- Certificate history dari Fabric
+This system follows a **hybrid data storage architecture**:
 
-Ledger tidak menyimpan:
+1. **IPFS (InterPlanetary File System)**
 
-- PDF
-- nama mahasiswa
-- NIM mentah
-- tanggal lahir
-- IPK
-- verification log backend
+   * Stores the original certificate PDF file.
+   * Generates a unique content identifier (**CID**) for each uploaded document.
 
-## Install
+2. **Hyperledger Fabric (Blockchain Ledger)**
 
-```bash
-npm install
-```
+   * Stores the document's digital fingerprint (the IPFS CID) as `documentHash`.
+   * Ensures document integrity and immutability.
+   * Tracks certificate status (`ACTIVE`, `REVOKED`, etc.).
 
-## Environment
+3. **PostgreSQL**
 
-Salin `.env.example` menjadi `.env`, lalu sesuaikan channel, chaincode, peer endpoint, dan crypto material.
+   * Stores certificate metadata locally.
+   * Enables fast searches (e.g., by Certificate Number) before performing real-time validation against the blockchain.
+
+---
+
+# 🚀 Application Setup & Run Guide
+
+## 1. System Requirements
+
+Ensure the following software is installed:
+
+* Docker & Docker Compose
+* Node.js (LTS, v20+ recommended)
+* pnpm or npm
+
+---
+
+## 2. Environment Configuration
+
+Copy `.env.example` to `.env` in the project root directory:
 
 ```bash
 cp .env.example .env
 ```
 
-Contoh:
+Modify database credentials and ports as needed.
 
-```env
-PORT=3000
-FABRIC_CHANNEL_NAME=appchannel-etcdraft
-FABRIC_CHAINCODE_NAME=basic
-FABRIC_MSP_ID=Org1MSP
-FABRIC_PEER_ENDPOINT=localhost:7051
-FABRIC_PEER_TLS_HOST_OVERRIDE=peer1org1.example.com
-FABRIC_TLS_CERT_PATH=/mnt/d/path/to/tls-ca.pem
-FABRIC_CLIENT_CERT_PATH=/mnt/d/path/to/signcert.pem
-FABRIC_CLIENT_KEY_PATH=/mnt/d/path/to/private-key.pem
-```
+---
 
-## Run
+## 3. Start Infrastructure Services (Database, IPFS, and Backend)
+
+Run Docker Compose from the project root:
 
 ```bash
-npm run dev
+docker compose up -d
 ```
 
-API berjalan di:
+Services will be available at:
 
-```text
-http://localhost:3000
-```
+* Backend API: `http://localhost:3000`
+* IPFS Gateway: `http://localhost:8081` (or `http://localhost:8080`)
+* PostgreSQL: `localhost:5433` (internal container port `5432`)
 
-## API
+---
 
-Health:
+## 4. Start the Blockchain Network (Hyperledger Fabric)
+
+Run the blockchain Docker Compose configuration:
 
 ```bash
-curl http://localhost:3000/health
-curl http://localhost:3000/fabric/health
+docker compose -f blockchain/docker-compose.yaml up -d
 ```
 
-Initialize ledger:
+This starts:
+
+* Peer nodes
+* Orderer nodes
+* Chaincode v1.2
+
+---
+
+## 5. Initialize the Ledger
+
+Before using the system, initialize the blockchain ledger to register the demo issuer account:
 
 ```bash
 curl -X POST http://localhost:3000/api/ledger/init
 ```
 
-Register issuer:
+---
 
-```bash
-curl -X POST http://localhost:3000/api/issuers \
-  -H "Content-Type: application/json" \
-  -d '{
-    "issuerId": "DEMO_ISSUER",
-    "organizationName": "Demo University",
-    "departmentName": "Academic Office",
-    "mspId": "Org1MSP"
-  }'
+# 🛰️ Frontend Integration Guide (API Documentation)
+
+> 🔑 **Important Concept**
+>
+> The backend standardizes the `documentHash` value as the **IPFS CID**. Frontend developers only need to work with **`ipfsCid`** when handling file identity and proof-of-authenticity operations.
+
+---
+
+# 1. Issue / Upload a New Certificate
+
+### Endpoint
+
+```http
+POST /api/upload
 ```
 
-Get issuer:
+Used by university administrators to register a new certificate and upload its original PDF file.
 
-```bash
-curl http://localhost:3000/api/issuers/DEMO_ISSUER
-curl http://localhost:3000/api/issuers/DEMO_ISSUER/exists
+### Content-Type
+
+```http
+multipart/form-data
 ```
 
-Issue certificate:
+### Form Data Fields
 
-```bash
-curl -X POST http://localhost:3000/api/certificates \
-  -H "Content-Type: application/json" \
-  -d '{
-    "certificateId": "CERT-001",
-    "certificateNumber": "NO-001",
-    "studentId": "NIM-RAW-001",
-    "issuerId": "DEMO_ISSUER",
-    "certificateType": "DIPLOMA",
-    "title": "Bachelor Certificate",
-    "documentBase64": "BASE64_PDF_BYTES",
-    "ipfsCid": "bafy...",
-    "issuedAt": "2026-06-18T00:00:00Z",
-    "expiredAt": ""
-  }'
+| Field             | Type | Description                                     |
+| ----------------- | ---- | ----------------------------------------------- |
+| file_ijazah       | File | Original certificate PDF                        |
+| certificateNumber | Text | Unique certificate number                       |
+| studentId         | Text | Student identification number                   |
+| issuerId          | Text | Issuing institution ID (default: `DEMO_ISSUER`) |
+| organizationName  | Text | University name                                 |
+| departmentName    | Text | Faculty or department                           |
+| mspId             | Text | Blockchain MSP ID (default: `Org1MSP`)          |
+| certificateType   | Text | Certificate category (e.g., `DIPLOMA`)          |
+| title             | Text | Degree title                                    |
+| issuedAt          | Text | Issue date (`YYYY-MM-DD`)                       |
+
+### Example Success Response
+
+```json
+{
+  "success": true,
+  "message": "Certificate uploaded successfully",
+  "data": {
+    "...": "..."
+  }
+}
 ```
 
-Backend akan hash `studentId` menjadi `studentIdHash` dan hash bytes dari `documentBase64` menjadi `documentHash` sebelum memanggil chaincode. Jika hash sudah dihitung di layer lain, kirim `studentIdHash` dan `documentHash` langsung.
+---
 
-Verify certificate:
+# 2. Search & Verify by Certificate Number
 
-```bash
-curl -X POST http://localhost:3000/api/certificates/CERT-001/verify \
-  -H "Content-Type: application/json" \
-  -d '{
-    "documentBase64": "BASE64_PDF_BYTES"
-  }'
+### Endpoint
+
+```http
+GET /api/verify/:certificateNumber
 ```
 
-Revoke certificate:
+This is the primary public verification endpoint.
 
-```bash
-curl -X POST http://localhost:3000/api/certificates/CERT-001/revoke \
-  -H "Content-Type: application/json" \
-  -d '{
-    "reason": "Incorrect uploaded document",
-    "revokedAt": "2026-06-18T01:00:00Z"
-  }'
+The backend will:
+
+1. Search certificate metadata in PostgreSQL.
+2. Validate certificate status against the blockchain ledger in real time.
+3. Generate an accessible IPFS document URL.
+
+### Example Request
+
+```http
+GET /api/verify/CERT-2026-TI-0002
 ```
 
-Backend akan hash `reason` menjadi `reasonHash` sebelum memanggil ledger.
+### Example Success Response
 
-Reissue certificate:
-
-```bash
-curl -X POST http://localhost:3000/api/certificates/CERT-001/reissue \
-  -H "Content-Type: application/json" \
-  -d '{
-    "newCertificateId": "CERT-002",
-    "newCertificateNumber": "NO-002",
-    "newDocumentBase64": "BASE64_NEW_PDF_BYTES",
-    "newIpfsCid": "bafy-new...",
-    "reason": "Corrected document",
-    "reissuedAt": "2026-06-18T02:00:00Z"
-  }'
+```json
+{
+  "success": true,
+  "valid": true,
+  "message": "certificate is valid",
+  "ledgerData": {},
+  "dbData": {},
+  "documentUrl": "http://localhost:8081/ipfs/<CID>"
+}
 ```
 
-Other reads:
+### Frontend Implementation Note
 
-```bash
-curl http://localhost:3000/api/certificates
-curl http://localhost:3000/api/certificates/CERT-001
-curl http://localhost:3000/api/certificates/CERT-001/exists
-curl http://localhost:3000/api/certificates/CERT-001/revocation
-curl http://localhost:3000/api/certificates/CERT-001/history
-curl http://localhost:3000/api/issuers/DEMO_ISSUER/certificates
+If `valid` is `true`, the certificate PDF can be rendered directly using `documentUrl` with:
+
+* `<iframe>`
+* PDF Viewer
+* Embedded PDF component
+
+---
+
+# 3. Manual PDF Verification
+
+### Endpoint
+
+```http
+POST /api/certificates/:certificateId/verify
 ```
 
-## Chaincode Mapping
+Used when the frontend calculates the document CID locally (client-side hashing) and sends it directly to the blockchain for authenticity verification.
 
-- `InitLedger()`
-- `RegisterIssuer(issuerID, organizationName, departmentName, mspID)`
-- `GetIssuer(issuerID)`
-- `IssuerExists(issuerID)`
-- `IssueCertificate(certificateID, certificateNumber, studentIDHash, issuerID, certificateType, title, documentHash, ipfsCid, issuedAt, expiredAt)`
-- `GetCertificate(certificateID)`
-- `CertificateExists(certificateID)`
-- `VerifyCertificate(certificateID, documentHash)`
-- `RevokeCertificate(certificateID, reasonHash, revokedAt)`
-- `GetRevocationInfo(certificateID)`
-- `ReissueCertificate(oldCertificateID, newCertificateID, newCertificateNumber, newDocumentHash, newIpfsCid, reasonHash, reissuedAt)`
-- `GetCertificateHistory(certificateID)`
-- `GetAllCertificates()`
-- `GetCertificatesByIssuer(issuerID)`
+### Request Body
 
-## Scripts
-
-```bash
-npm run dev
-npm run typecheck
-npm test
-npm run build
-npm start
+```json
+{
+  "documentHash": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
+}
 ```
+
+Replace the value with the CID generated from the uploaded PDF.
+
+### Valid Document Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "certificateId": "2d5a3d1e-3221-44f7-8f3b-e13a0393d625",
+    "valid": true,
+    "status": "ACTIVE",
+    "message": "certificate is valid",
+    "revoked": false,
+    "tampered": false
+  }
+}
+```
+
+### Tampered Document Response
+
+```json
+{
+  "success": true,
+  "data": {
+    "certificateId": "2d5a3d1e-3221-44f7-8f3b-e13a0393d625",
+    "valid": false,
+    "status": "ACTIVE",
+    "message": "document hash does not match certificate record",
+    "revoked": false,
+    "tampered": true
+  }
+}
+```
+
+---
+
+# 🛠️ Development Scripts
+
+The following npm scripts are available in the project root:
+
+| Command             | Description                       |
+| ------------------- | --------------------------------- |
+| `npm run dev`       | Start the development server      |
+| `npm run build`     | Compile TypeScript for production |
+| `npm run typecheck` | Run TypeScript type analysis      |
+| `npm test`          | Execute the test suite            |
+
+---
+
+# 📌 Technology Stack
+
+* **Backend:** Express.js + TypeScript
+* **Blockchain:** Hyperledger Fabric
+* **Storage:** IPFS
+* **Database:** PostgreSQL
+* **Containerization:** Docker & Docker Compose
+
+---
+
+## Key Features
+
+* Secure certificate issuance and verification
+* Tamper-proof certificate records using blockchain
+* Decentralized document storage via IPFS
+* Real-time blockchain validation
+* Fast metadata lookup through PostgreSQL
+* Manual document authenticity verification using IPFS CID
+* Dockerized deployment environment
+
+This architecture combines the strengths of decentralized storage, blockchain immutability, and traditional database performance. A surprisingly rare case of technologies cooperating instead of starting a turf war over whose responsibility the data is.

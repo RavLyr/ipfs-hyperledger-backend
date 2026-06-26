@@ -247,7 +247,7 @@ export async function uploadCertificate(
     issuerId: input.issuerId,
     certificateType: input.certificateType,
     title: input.title,
-    documentHash: input.documentHash,
+    documentHash: ipfsCid, // Treat ipfsCid as the documentHash
     ipfsCid,
     issuedAt: input.issuedAt,
     expiredAt: input.expiredAt,
@@ -255,6 +255,7 @@ export async function uploadCertificate(
 
   return insertCertificate({
     ...input,
+    documentHash: ipfsCid, // Treat ipfsCid as the documentHash
     ipfsCid,
     file_name: file.originalname,
     mime_type: file.mimetype,

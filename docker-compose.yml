@@ -9,12 +9,17 @@ services:
     ports:
       - "127.0.0.1:${POSTGRES_LOCAL_PORT:-5433}:5432"
     volumes:
-      - ${DATA_ROOT:-./.docker-data}/postgres:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - app
 
@@ -22,7 +27,9 @@ services:
     image: ipfs/kubo:v0.32.1
     restart: unless-stopped
     ports:
-      - "${IPFS_GATEWAY_PORT:-8080}:8080"
+      - "${IPFS_GATEWAY_PORT:-8080}:8080"      # Gateway (public)
+      # - "127.0.0.1:5001:5001"                # API (uncomment for host debugging)
+      # - "4001:4001"                           # Swarm (uncomment for public IPFS network)
     volumes:
       - ${DATA_ROOT:-./.docker-data}/ipfs:/data/ipfs
       - ${DATA_ROOT:-./.docker-data}/ipfs-staging:/export
@@ -31,27 +38,38 @@ services:
       interval: 10s
       timeout: 5s
       retries: 20
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     networks:
       - app
 
   migrate:
+    image: ipfs-hyperledger-backend:latest
     build:
       context: .
       dockerfile: Dockerfile
+      network: host
     restart: "no"
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
-    command: ["pnpm", "prisma:deploy"]
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:-ipfs_hyperledger_db}?schema=public
+    # Override CMD: run as root so prisma CLI works (no binaries in prod-deps)
+    user: "0"
+    command: >
+      sh -c "
+        npx prisma migrate deploy --schema ./prisma/schema.prisma &&
+        echo '✅ Migrations applied successfully'
+      "
     networks:
       - app
 
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ipfs-hyperledger-backend:latest   # Reuses image built by migrate — no double build
     restart: unless-stopped
     depends_on:
       postgres:
@@ -63,7 +81,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
-      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
+      DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:-ipfs_hyperledger_db}?schema=public
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: ${DB_USER:-postgres}
@@ -82,7 +100,12 @@ services:
     ports:
       - "${APP_PORT:-3000}:3000"
     volumes:
-      - ${FABRIC_CRYPTO_HOST_PATH:-../hyperleger-fabric-ipfs/organization}:/fabric-crypto:ro
+      - ${FABRIC_CRYPTO_HOST_PATH:-./blockchain/organization}:/fabric-crypto:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     networks:
       - app
       - fabric
@@ -93,3 +116,6 @@ networks:
   fabric:
     external: true
     name: ${FABRIC_DOCKER_NETWORK:-fabric_migration_net}
+
+volumes:
+  postgres_data:
