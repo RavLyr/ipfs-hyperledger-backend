@@ -113,8 +113,11 @@ export async function getCertificateHistory(req: Request, res: Response): Promis
   res.json({ success: true, data: result });
 }
 
-export async function getAllCertificates(_req: Request, res: Response): Promise<void> {
-  const result = await certificateService.getAllCertificates();
+export async function getAllCertificates(req: Request, res: Response): Promise<void> {
+  const issuerId = typeof req.query.issuerId === 'string' ? req.query.issuerId.trim() : undefined;
+  const result = issuerId
+    ? await certificateService.getCertificatesByIssuer(issuerId)
+    : await certificateService.getAllCertificates();
 
   res.json({ success: true, data: result });
 }
@@ -194,10 +197,11 @@ export async function verifyCertificateController(
 }
 
 export async function getAllCertificatesController(
-  _req: Request,
+  req: Request,
   res: Response
 ): Promise<void> {
-  const certificates = await getAllCertificatesService();
+  const issuerId = typeof req.query.issuerId === 'string' ? req.query.issuerId.trim() : undefined;
+  const certificates = await getAllCertificatesService(issuerId);
 
   res.json({
     success: true,

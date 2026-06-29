@@ -273,8 +273,8 @@ export async function verifyCertificateService(
   return findCertificateByCertificateNumber(cleanCertificateNumber);
 }
 
-export async function getAllCertificatesService(): Promise<Certificate[]> {
-  return findAllCertificates();
+export async function getAllCertificatesService(issuerId?: string): Promise<Certificate[]> {
+  return findAllCertificates(issuerId);
 }
 
 function validateCertificateBody(body: RawBody, fileBuffer: Buffer): CertificateTextInput {

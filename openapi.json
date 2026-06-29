@@ -227,7 +227,17 @@
       },
       "get": {
         "summary": "Daftar Semua Sertifikat (Ledger)",
-        "description": "Mengambil seluruh rekaman sertifikat dari world state blockchain.",
+        "description": "Mengambil rekaman sertifikat dari world state blockchain. Jika parameter issuerId ditentukan, ia akan menyaring sertifikat untuk penerbit tersebut saja.",
+        "parameters": [
+          {
+            "name": "issuerId",
+            "in": "query",
+            "required": false,
+            "description": "ID issuer untuk menyaring sertifikat.",
+            "schema": { "type": "string" },
+            "example": "DEMO_ISSUER"
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of ledger certificates",
@@ -668,7 +678,17 @@
     "/api/": {
       "get": {
         "summary": "Daftar Semua Sertifikat (Database)",
-        "description": "Mengambil semua daftar sertifikat yang tersimpan di database lokal PostgreSQL.",
+        "description": "Mengambil daftar sertifikat yang tersimpan di database lokal PostgreSQL. Jika parameter issuerId ditentukan, ia hanya mengambil sertifikat yang diterbitkan oleh issuer tersebut.",
+        "parameters": [
+          {
+            "name": "issuerId",
+            "in": "query",
+            "required": false,
+            "description": "ID issuer untuk menyaring sertifikat.",
+            "schema": { "type": "string" },
+            "example": "DEMO_ISSUER"
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of local database certificates",
