@@ -17,7 +17,6 @@ export type IssueCertificateInput = {
   readonly issuerId: string;
   readonly certificateType: string;
   readonly title: string;
-  readonly documentHash: string;
   readonly ipfsCid: string;
   readonly issuedAt: string;
   readonly expiredAt: string;
@@ -25,7 +24,7 @@ export type IssueCertificateInput = {
 
 export type VerifyCertificateInput = {
   readonly certificateId: string;
-  readonly documentHash: string;
+  readonly ipfsCid: string;
 };
 
 export type RevokeCertificateInput = {
@@ -38,7 +37,6 @@ export type ReissueCertificateInput = {
   readonly oldCertificateId: string;
   readonly newCertificateId: string;
   readonly newCertificateNumber: string;
-  readonly newDocumentHash: string;
   readonly newIpfsCid: string;
   readonly reasonHash: string;
   readonly reissuedAt: string;
@@ -133,13 +131,11 @@ export function parseIssueCertificateBody(body: unknown): IssueCertificateInput 
   }
 
   const studentIdHash = readHashedValue(body, 'studentIdHash', 'studentId');
-  const documentHash = readDocumentHash(body, 'documentHash', 'documentBase64');
 
-  if (!studentIdHash || !documentHash) {
+  if (!studentIdHash) {
     throw validationError({
       body: {
         studentIdHash: 'Required non-empty string, or provide studentId so backend can hash it',
-        documentHash: 'Required non-empty string, or provide documentBase64 so backend can hash it'
       }
     });
   }
@@ -151,7 +147,6 @@ export function parseIssueCertificateBody(body: unknown): IssueCertificateInput 
     issuerId: readRequiredString(body, 'issuerId'),
     certificateType: readRequiredString(body, 'certificateType'),
     title: readRequiredString(body, 'title'),
-    documentHash,
     ipfsCid: readRequiredString(body, 'ipfsCid'),
     issuedAt: readRequiredString(body, 'issuedAt'),
     expiredAt: readNonEmptyString(body, 'expiredAt') ?? ''
@@ -161,9 +156,9 @@ export function parseIssueCertificateBody(body: unknown): IssueCertificateInput 
 export function parseVerifyCertificateBody(params: unknown, body: unknown): VerifyCertificateInput {
   const certificateId = parseCertificateIdParams(params);
   const source = isRecord(body) ? body : {};
-  const documentHash = readDocumentHash(source, 'documentHash', 'documentBase64') ?? '';
+  const ipfsCid = readNonEmptyString(source, 'ipfsCid') ?? readDocumentHash(source, 'documentHash', 'documentBase64') ?? '';
 
-  return { certificateId, documentHash };
+  return { certificateId, ipfsCid };
 }
 
 export function parseRevokeCertificateBody(params: unknown, body: unknown): RevokeCertificateInput {
@@ -197,13 +192,11 @@ export function parseReissueCertificateBody(params: unknown, body: unknown): Rei
     throw validationError({ body: 'Expected object' });
   }
 
-  const newDocumentHash = readDocumentHash(body, 'newDocumentHash', 'newDocumentBase64');
   const reasonHash = readHashedValue(body, 'reasonHash', 'reason');
 
-  if (!newDocumentHash || !reasonHash) {
+  if (!reasonHash) {
     throw validationError({
       body: {
-        newDocumentHash: 'Required non-empty string, or provide newDocumentBase64 so backend can hash it',
         reasonHash: 'Required non-empty string, or provide reason so backend can hash it'
       }
     });
@@ -213,7 +206,6 @@ export function parseReissueCertificateBody(params: unknown, body: unknown): Rei
     oldCertificateId,
     newCertificateId: readNonEmptyString(body, 'newCertificateId') ?? randomUUID(),
     newCertificateNumber: readRequiredString(body, 'newCertificateNumber'),
-    newDocumentHash,
     newIpfsCid: readRequiredString(body, 'newIpfsCid'),
     reasonHash,
     reissuedAt: readNonEmptyString(body, 'reissuedAt') ?? new Date().toISOString()

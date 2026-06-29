@@ -167,7 +167,7 @@ export async function verifyCertificateController(
     // 3. Verify on Ledger using certificateId and ipfsCid retrieved from DB
     const ledgerResult = await certificateService.verifyCertificate({
       certificateId: certificate.certificateId,
-      documentHash: certificate.ipfsCid, // Using stored ipfsCid to verify
+      ipfsCid: certificate.ipfsCid, // Using stored ipfsCid to verify
     }) as any;
 
     const valid = ledgerResult && ledgerResult.valid === true;
