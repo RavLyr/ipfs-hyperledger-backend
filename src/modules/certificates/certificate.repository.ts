@@ -89,8 +89,10 @@ export async function findCertificateByCertificateNumber(
   return certificate ? mapCertificate(certificate) : null;
 }
 
-export async function findAllCertificates(): Promise<Certificate[]> {
+export async function findAllCertificates(issuerId?: string): Promise<Certificate[]> {
+  const where = issuerId ? { issuerId } : {};
   const certificates = await prisma.certificate.findMany({
+    where,
     orderBy: { createdAt: 'desc' },
   });
 

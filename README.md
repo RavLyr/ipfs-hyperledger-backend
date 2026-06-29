@@ -15,7 +15,7 @@ This system follows a **hybrid data storage architecture**:
 
 2. **Hyperledger Fabric (Blockchain Ledger)**
 
-   * Stores the document's digital fingerprint (the IPFS CID) as `documentHash`.
+   * Stores the document's digital fingerprint (the IPFS CID) directly as `ipfsCid`.
    * Ensures document integrity and immutability.
    * Tracks certificate status (`ACTIVE`, `REVOKED`, etc.).
 
@@ -94,9 +94,7 @@ curl -X POST http://localhost:3000/api/ledger/init
 
 # 🛰️ Frontend Integration Guide (API Documentation)
 
-> 🔑 **Important Concept**
->
-> The backend standardizes the `documentHash` value as the **IPFS CID**. Frontend developers only need to work with **`ipfsCid`** when handling file identity and proof-of-authenticity operations.
+> The smart contract and backend use **`ipfsCid`** as the single content identifier. Frontend developers only need to work with **`ipfsCid`** when handling file identity and proof-of-authenticity operations.
 
 ---
 
@@ -204,7 +202,7 @@ Used when the frontend calculates the document CID locally (client-side hashing)
 
 ```json
 {
-  "documentHash": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
+  "ipfsCid": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
 }
 ```
 

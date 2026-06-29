@@ -91,7 +91,6 @@ describe('certificate lifecycle chaincode mapping', () => {
           'DEMO_ISSUER',
           'DIPLOMA',
           'Bachelor Certificate',
-          sha256Hex(Buffer.from(documentBase64, 'base64')),
           'bafy-certificate',
           '2026-06-18T00:00:00Z',
           ''
@@ -122,7 +121,6 @@ describe('certificate lifecycle chaincode mapping', () => {
         issuerId: 'UNKNOWN',
         certificateType: 'DIPLOMA',
         title: 'Bachelor Certificate',
-        documentHash: 'doc-hash',
         ipfsCid: 'bafy-certificate',
         issuedAt: '2026-06-18T00:00:00Z',
         expiredAt: ''
@@ -146,14 +144,14 @@ describe('certificate lifecycle chaincode mapping', () => {
     const { gateway, calls } = createMockGateway({ VerifyCertificate: expected });
     const service = createCertificateService(gateway);
 
-    const result = await service.verifyCertificate({ certificateId: 'CERT-001', documentHash: 'doc-hash' });
+    const result = await service.verifyCertificate({ certificateId: 'CERT-001', ipfsCid: 'ipfs-cid' });
 
     assert.equal(result, expected);
     assert.deepEqual(calls, [
       {
         mode: 'evaluate',
         functionName: 'SmartContract:VerifyCertificate',
-        args: ['CERT-001', 'doc-hash']
+        args: ['CERT-001', 'ipfs-cid']
       }
     ]);
   });
@@ -165,7 +163,7 @@ describe('certificate lifecycle chaincode mapping', () => {
       status: 'ACTIVE',
       issuerId: 'DEMO_ISSUER',
       certificateType: 'DIPLOMA',
-      message: 'document hash does not match certificate record',
+      message: 'IPFS CID does not match certificate record',
       issuedAt: '2026-06-18T00:00:00Z',
       revoked: false,
       tampered: true
@@ -173,7 +171,7 @@ describe('certificate lifecycle chaincode mapping', () => {
     const { gateway } = createMockGateway({ VerifyCertificate: expected });
     const service = createCertificateService(gateway);
 
-    const result = await service.verifyCertificate({ certificateId: 'CERT-001', documentHash: 'wrong-hash' });
+    const result = await service.verifyCertificate({ certificateId: 'CERT-001', ipfsCid: 'wrong-cid' });
 
     assert.equal(result, expected);
   });
@@ -212,7 +210,7 @@ describe('certificate lifecycle chaincode mapping', () => {
     const { gateway } = createMockGateway({ VerifyCertificate: expected });
     const service = createCertificateService(gateway);
 
-    const result = await service.verifyCertificate({ certificateId: 'CERT-001', documentHash: 'doc-hash' });
+    const result = await service.verifyCertificate({ certificateId: 'CERT-001', ipfsCid: 'ipfs-cid' });
 
     assert.equal(result, expected);
   });
@@ -225,7 +223,6 @@ describe('certificate lifecycle chaincode mapping', () => {
       oldCertificateId: 'CERT-001',
       newCertificateId: 'CERT-002',
       newCertificateNumber: 'NO-002',
-      newDocumentHash: 'new-doc-hash',
       newIpfsCid: 'bafy-new',
       reasonHash: 'reason-hash',
       reissuedAt: '2026-06-18T02:00:00Z'
@@ -235,7 +232,7 @@ describe('certificate lifecycle chaincode mapping', () => {
       {
         mode: 'submit',
         functionName: 'SmartContract:ReissueCertificate',
-        args: ['CERT-001', 'CERT-002', 'NO-002', 'new-doc-hash', 'bafy-new', 'reason-hash', '2026-06-18T02:00:00Z']
+        args: ['CERT-001', 'CERT-002', 'NO-002', 'bafy-new', 'reason-hash', '2026-06-18T02:00:00Z']
       }
     ]);
   });

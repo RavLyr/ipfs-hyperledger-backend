@@ -130,7 +130,6 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
           input.issuerId,
           input.certificateType,
           input.title,
-          input.documentHash,
           input.ipfsCid,
           input.issuedAt,
           input.expiredAt
@@ -150,7 +149,6 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
           input.issuerId,
           input.certificateType,
           input.title,
-          input.documentHash,
           input.ipfsCid,
           input.issuedAt,
           input.expiredAt
@@ -168,7 +166,7 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
 
     verifyCertificate(input: VerifyCertificateInput): Promise<FabricResult> {
       return runFabric(() =>
-        gateway.evaluateTransaction(chaincodeFunction('VerifyCertificate'), input.certificateId, input.documentHash)
+        gateway.evaluateTransaction(chaincodeFunction('VerifyCertificate'), input.certificateId, input.ipfsCid)
       );
     },
 
@@ -189,7 +187,6 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
           input.oldCertificateId,
           input.newCertificateId,
           input.newCertificateNumber,
-          input.newDocumentHash,
           input.newIpfsCid,
           input.reasonHash,
           input.reissuedAt
@@ -247,7 +244,6 @@ export async function uploadCertificate(
     issuerId: input.issuerId,
     certificateType: input.certificateType,
     title: input.title,
-    documentHash: ipfsCid, // Treat ipfsCid as the documentHash
     ipfsCid,
     issuedAt: input.issuedAt,
     expiredAt: input.expiredAt,
@@ -277,8 +273,8 @@ export async function verifyCertificateService(
   return findCertificateByCertificateNumber(cleanCertificateNumber);
 }
 
-export async function getAllCertificatesService(): Promise<Certificate[]> {
-  return findAllCertificates();
+export async function getAllCertificatesService(issuerId?: string): Promise<Certificate[]> {
+  return findAllCertificates(issuerId);
 }
 
 function validateCertificateBody(body: RawBody, fileBuffer: Buffer): CertificateTextInput {
