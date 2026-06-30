@@ -136,7 +136,7 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
           input.title,
           input.ipfsCid,
           input.issuedAt,
-          "expired"
+          input.expiredAt
         )
       );
     },
@@ -155,7 +155,7 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
           input.title,
           input.ipfsCid,
           input.issuedAt,
-          "expired"
+          input.expiredAt
         )
       );
     },

@@ -19,6 +19,7 @@ export type IssueCertificateInput = {
   readonly title: string;
   readonly ipfsCid: string;
   readonly issuedAt: string;
+  readonly expiredAt: string;
 };
 
 export type VerifyCertificateInput = {
@@ -135,7 +136,8 @@ export function parseIssueCertificateBody(body: unknown): IssueCertificateInput 
     certificateType: readRequiredString(body, 'certificateType'),
     title: readRequiredString(body, 'degreeTitle'),
     ipfsCid: readRequiredString(body, 'ipfsCid'),
-    issuedAt: readRequiredString(body, 'issuedAt')
+    issuedAt: readRequiredString(body, 'issuedAt'),
+    expiredAt: readNonEmptyString(body, 'expiredAt') ?? ''
   };
 }
 
