@@ -74,18 +74,6 @@ function readHashedValue(source: Record<string, unknown>, hashField: string, raw
   return rawValue ? sha256Hex(rawValue) : undefined;
 }
 
-function readDocumentHash(source: Record<string, unknown>, hashField: string, base64Field: string): string | undefined {
-  const hash = readNonEmptyString(source, hashField);
-
-  if (hash) {
-    return hash;
-  }
-
-  const documentBase64 = readNonEmptyString(source, base64Field);
-
-  return documentBase64 ? sha256Hex(Buffer.from(documentBase64, 'base64')) : undefined;
-}
-
 function validationError(details: unknown): AppError {
   return new AppError('Validation failed', 400, details);
 }
@@ -156,7 +144,7 @@ export function parseIssueCertificateBody(body: unknown): IssueCertificateInput 
 export function parseVerifyCertificateBody(params: unknown, body: unknown): VerifyCertificateInput {
   const certificateId = parseCertificateIdParams(params);
   const source = isRecord(body) ? body : {};
-  const ipfsCid = readNonEmptyString(source, 'ipfsCid') ?? readDocumentHash(source, 'documentHash', 'documentBase64') ?? '';
+  const ipfsCid = readNonEmptyString(source, 'ipfsCid') ?? '';
 
   return { certificateId, ipfsCid };
 }
@@ -246,7 +234,6 @@ export interface CertificateTextInput {
   certificateType: string;
   title: string;
   studentIdHash: string;
-  documentHash: string;
   issuedAt: string;
   expiredAt: string;
   previousCertificateId?: string;
@@ -254,6 +241,7 @@ export interface CertificateTextInput {
 }
 
 export interface CreateCertificateInput extends CertificateTextInput {
+  documentHash: string;
   ipfsCid: string;
   file_name: string;
   mime_type: string;

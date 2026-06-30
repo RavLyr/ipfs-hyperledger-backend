@@ -25,3 +25,5 @@ blockchain/
 *.md
 **/*.md
 !README.md
+!AGENT_CONTEXT.md
+!REPOSITORY_ANALYSIS.md

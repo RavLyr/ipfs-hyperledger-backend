@@ -65,7 +65,6 @@ describe('certificate lifecycle chaincode mapping', () => {
   it('issues certificate with IssueCertificate argument order and hashes raw inputs before ledger call', async () => {
     const { gateway, calls } = createMockGateway();
     const service = createCertificateService(gateway);
-    const documentBase64 = Buffer.from('pdf bytes').toString('base64');
     const input = parseIssueCertificateBody({
       certificateId: 'CERT-001',
       certificateNumber: 'NO-001',
@@ -73,7 +72,6 @@ describe('certificate lifecycle chaincode mapping', () => {
       issuerId: 'DEMO_ISSUER',
       certificateType: 'DIPLOMA',
       title: 'Bachelor Certificate',
-      documentBase64,
       ipfsCid: 'bafy-certificate',
       issuedAt: '2026-06-18T00:00:00Z'
     });

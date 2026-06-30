@@ -218,7 +218,7 @@ export async function uploadCertificate(
     throw new Error('file_ijazah is required');
   }
 
-  const input = validateCertificateBody(body, file.buffer);
+  const input = validateCertificateBody(body);
   const existingCertificate = await findCertificateByCertificateNumber(input.certificateNumber);
 
   if (existingCertificate) {
@@ -251,7 +251,7 @@ export async function uploadCertificate(
 
   return insertCertificate({
     ...input,
-    documentHash: ipfsCid, // Treat ipfsCid as the documentHash
+    documentHash: ipfsCid,
     ipfsCid,
     file_name: file.originalname,
     mime_type: file.mimetype,
@@ -277,7 +277,7 @@ export async function getAllCertificatesService(issuerId?: string): Promise<Cert
   return findAllCertificates(issuerId);
 }
 
-function validateCertificateBody(body: RawBody, fileBuffer: Buffer): CertificateTextInput {
+function validateCertificateBody(body: RawBody): CertificateTextInput {
   const missingFields = REQUIRED_UPLOAD_FIELDS.filter((field) => {
     const value = body[field];
     return typeof value !== 'string' || value.trim() === '';
@@ -290,7 +290,6 @@ function validateCertificateBody(body: RawBody, fileBuffer: Buffer): Certificate
   const issuedAt = clean(body.issuedAt);
   const expiredAt = clean(body.expiredAt);
   const studentIdHash = readHashOrRaw(body, 'studentIdHash', 'studentId');
-  const documentHash = clean(body.documentHash) || sha256Hex(fileBuffer);
 
   if (!studentIdHash) {
     throw new Error('studentIdHash is required, or provide studentId so backend can hash it');
@@ -314,7 +313,6 @@ function validateCertificateBody(body: RawBody, fileBuffer: Buffer): Certificate
     certificateType: clean(body.certificateType),
     title: clean(body.title),
     studentIdHash,
-    documentHash,
     issuedAt,
     expiredAt,
     previousCertificateId: clean(body.previousCertificateId) || undefined,

@@ -62,5 +62,5 @@ export const env: Env = {
   DB_PASSWORD: process.env.DB_PASSWORD || "password",
   DB_NAME: process.env.DB_NAME || "ipfs_hyperledger_db",
   IPFS_API_URL: process.env.IPFS_API_URL || "http://127.0.0.1:5001",
-  IPFS_GATEWAY_URL: process.env.IPFS_GATEWAY_URL || "http://127.0.0.1:8080",
+  IPFS_GATEWAY_URL: process.env.IPFS_GATEWAY_URL || "http://127.0.0.1:8081",
 };
