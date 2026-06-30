@@ -98,7 +98,7 @@
             "in": "path",
             "required": true,
             "schema": { "type": "string" },
-            "example": "Universitas Diponegoro"
+            "example": "Universitas Contoh"
           }
         ],
         "responses": {
@@ -209,7 +209,7 @@
                     "data": {
                       "type": "object",
                       "properties": {
-                        "certificateId": { "type": "string", "example": "CERT-2026-000001" },
+                        "certificateId": { "type": "string", "example": "CERT-TEST-2026-000001" },
                         "fabricResult": {}
                       }
                     }
@@ -229,7 +229,7 @@
             "in": "query",
             "required": false,
             "schema": { "type": "string" },
-            "example": "Universitas Diponegoro"
+            "example": "Universitas Contoh"
           }
         ],
         "responses": {
@@ -336,7 +336,7 @@
                   "ipfsCid": {
                     "type": "string",
                     "description": "IPFS CID dari berkas sertifikat yang ingin dicocokkan.",
-                    "example": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx"
+                    "example": "bafybeigdummydocumentcid000000000000000000000000000"
                   }
                 },
                 "required": ["ipfsCid"]
@@ -453,9 +453,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "newCertificateId": { "type": "string", "example": "CERT-2026-000002" },
-                  "newCertificateNumber": { "type": "string", "example": "0010084122122026100007" },
-                  "newIpfsCid": { "type": "string", "example": "QmX2wV6yyyyyyyyyyyyyyyyyyyyyyyy" },
+                  "newCertificateId": { "type": "string", "example": "CERT-TEST-2026-000002" },
+                  "newCertificateNumber": { "type": "string", "example": "TEST-2026-000001" },
+                  "newIpfsCid": { "type": "string", "example": "bafybeigdummydocumentcid000000000000000000000000000" },
                   "reasonHash": { "type": "string", "example": "f03a6bc..." },
                   "reissuedAt": { "type": "string", "format": "date-time" }
                 },
@@ -477,8 +477,8 @@
                     "data": {
                       "type": "object",
                       "properties": {
-                        "oldCertificateId": { "type": "string", "example": "CERT-2026-000001" },
-                        "newCertificateId": { "type": "string", "example": "CERT-2026-000002" },
+                        "oldCertificateId": { "type": "string", "example": "CERT-TEST-2026-000001" },
+                        "newCertificateId": { "type": "string", "example": "CERT-TEST-2026-000002" },
                         "fabricResult": {}
                       }
                     }
@@ -548,24 +548,24 @@
                     "format": "binary",
                     "description": "Berkas ijazah PDF."
                   },
-                  "certificateId": { "type": "string", "example": "CERT-2026-000001" },
-                  "certificateNumber": { "type": "string", "example": "0010084122122026100006" },
-                  "studentName": { "type": "string", "example": "MAYAKA PUTY DANUZKYA" },
-                  "studentId": { "type": "string", "example": "23020122130052" },
-                  "graduationDate": { "type": "string", "format": "date", "example": "2025-12-16" },
-                  "studyProgram": { "type": "string", "example": "Program Sarjana Teknologi Pangan" },
-                  "faculty": { "type": "string", "example": "Fakultas Peternakan dan Pertanian" },
+                  "certificateId": { "type": "string", "example": "CERT-TEST-2026-000001" },
+                  "certificateNumber": { "type": "string", "example": "TEST-2026-000001" },
+                  "studentName": { "type": "string", "example": "TEST STUDENT" },
+                  "studentId": { "type": "string", "example": "23000000000000" },
+                  "graduationDate": { "type": "string", "format": "date", "example": "2026-06-30" },
+                  "studyProgram": { "type": "string", "example": "Program Studi Contoh" },
+                  "faculty": { "type": "string", "example": "Fakultas Contoh" },
                   "degreeLevel": { "type": "string", "example": "S1" },
-                  "degreeName": { "type": "string", "example": "Sarjana Teknologi Pangan" },
-                  "degreeAbbreviation": { "type": "string", "example": "S.T.P." },
-                  "universityName": { "type": "string", "example": "Universitas Diponegoro" },
-                  "universityAccreditationNumber": { "type": "string", "example": "106/SK/BAN-PT/Ak.Ppj/PT/II/2023" },
-                  "programAccreditationAgency": { "type": "string", "example": "BAN-PT" },
-                  "programAccreditationNumber": { "type": "string", "example": "2780/SK/BAN-PT/Akred-Intl/S/VII/2023" },
-                  "issueDate": { "type": "string", "format": "date", "example": "2026-01-15" },
-                  "deanName": { "type": "string", "example": "Prof. Sugiharto, S.Pt., M.Sc., Ph.D." },
-                  "rectorName": { "type": "string", "example": "Prof. Dr. Suharnomo, S.E., M.Si." },
-                  "issuer": { "type": "string", "example": "Universitas Diponegoro" }
+                  "degreeName": { "type": "string", "example": "Sarjana Contoh" },
+                  "degreeAbbreviation": { "type": "string", "example": "S.C." },
+                  "universityName": { "type": "string", "example": "Universitas Contoh" },
+                  "universityAccreditationNumber": { "type": "string", "example": "ACC-UNIV-TEST-001" },
+                  "programAccreditationAgency": { "type": "string", "example": "Example Accreditation Agency" },
+                  "programAccreditationNumber": { "type": "string", "example": "ACC-PROGRAM-TEST-001" },
+                  "issueDate": { "type": "string", "format": "date", "example": "2026-07-15" },
+                  "deanName": { "type": "string", "example": "Prof. Example Dean" },
+                  "rectorName": { "type": "string", "example": "Prof. Example Rector" },
+                  "issuer": { "type": "string", "example": "Universitas Contoh" }
                 },
                 "required": [
                   "file_ijazah",
@@ -622,7 +622,7 @@
             "in": "path",
             "required": true,
             "schema": { "type": "string" },
-            "example": "0010084122122026100006"
+            "example": "TEST-2026-000001"
           }
         ],
         "responses": {
@@ -643,7 +643,7 @@
                     "documentUrl": {
                       "type": "string",
                       "nullable": true,
-                      "example": "http://localhost:8080/ipfs/QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx"
+                      "example": "http://localhost:8080/ipfs/bafybeigdummydocumentcid000000000000000000000000000"
                     }
                   }
                 }
@@ -663,7 +663,7 @@
             "in": "query",
             "required": false,
             "schema": { "type": "string" },
-            "example": "Universitas Diponegoro"
+            "example": "Universitas Contoh"
           }
         ],
         "responses": {
@@ -757,34 +757,34 @@
       "RegisterIssuerRequest": {
         "type": "object",
         "properties": {
-          "issuer": { "type": "string", "example": "Universitas Diponegoro" },
-          "universityName": { "type": "string", "example": "Universitas Diponegoro" },
-          "faculty": { "type": "string", "example": "Fakultas Peternakan dan Pertanian" }
+          "issuer": { "type": "string", "example": "Universitas Contoh" },
+          "universityName": { "type": "string", "example": "Universitas Contoh" },
+          "faculty": { "type": "string", "example": "Fakultas Contoh" }
         },
         "required": ["issuer", "universityName", "faculty"]
       },
       "IssueCertificateRequest": {
         "type": "object",
         "properties": {
-          "certificateId": { "type": "string", "example": "CERT-2026-000001" },
-          "certificateNumber": { "type": "string", "example": "0010084122122026100006" },
-          "studentName": { "type": "string", "example": "MAYAKA PUTY DANUZKYA" },
-          "studentId": { "type": "string", "example": "23020122130052" },
-          "graduationDate": { "type": "string", "format": "date", "example": "2025-12-16" },
-          "studyProgram": { "type": "string", "example": "Program Sarjana Teknologi Pangan" },
-          "faculty": { "type": "string", "example": "Fakultas Peternakan dan Pertanian" },
+          "certificateId": { "type": "string", "example": "CERT-TEST-2026-000001" },
+          "certificateNumber": { "type": "string", "example": "TEST-2026-000001" },
+          "studentName": { "type": "string", "example": "TEST STUDENT" },
+          "studentId": { "type": "string", "example": "23000000000000" },
+          "graduationDate": { "type": "string", "format": "date", "example": "2026-06-30" },
+          "studyProgram": { "type": "string", "example": "Program Studi Contoh" },
+          "faculty": { "type": "string", "example": "Fakultas Contoh" },
           "degreeLevel": { "type": "string", "example": "S1" },
-          "degreeName": { "type": "string", "example": "Sarjana Teknologi Pangan" },
-          "degreeAbbreviation": { "type": "string", "example": "S.T.P." },
-          "universityName": { "type": "string", "example": "Universitas Diponegoro" },
-          "universityAccreditationNumber": { "type": "string", "example": "106/SK/BAN-PT/Ak.Ppj/PT/II/2023" },
-          "programAccreditationAgency": { "type": "string", "example": "BAN-PT" },
-          "programAccreditationNumber": { "type": "string", "example": "2780/SK/BAN-PT/Akred-Intl/S/VII/2023" },
-          "issueDate": { "type": "string", "format": "date", "example": "2026-01-15" },
-          "deanName": { "type": "string", "example": "Prof. Sugiharto, S.Pt., M.Sc., Ph.D." },
-          "rectorName": { "type": "string", "example": "Prof. Dr. Suharnomo, S.E., M.Si." },
-          "issuer": { "type": "string", "example": "Universitas Diponegoro" },
-          "ipfsCid": { "type": "string", "example": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx" }
+          "degreeName": { "type": "string", "example": "Sarjana Contoh" },
+          "degreeAbbreviation": { "type": "string", "example": "S.C." },
+          "universityName": { "type": "string", "example": "Universitas Contoh" },
+          "universityAccreditationNumber": { "type": "string", "example": "ACC-UNIV-TEST-001" },
+          "programAccreditationAgency": { "type": "string", "example": "Example Accreditation Agency" },
+          "programAccreditationNumber": { "type": "string", "example": "ACC-PROGRAM-TEST-001" },
+          "issueDate": { "type": "string", "format": "date", "example": "2026-07-15" },
+          "deanName": { "type": "string", "example": "Prof. Example Dean" },
+          "rectorName": { "type": "string", "example": "Prof. Example Rector" },
+          "issuer": { "type": "string", "example": "Universitas Contoh" },
+          "ipfsCid": { "type": "string", "example": "bafybeigdummydocumentcid000000000000000000000000000" }
         },
         "required": [
           "certificateNumber",
@@ -810,7 +810,7 @@
       "LedgerCertificateAsset": {
         "type": "object",
         "properties": {
-          "certificateId": { "type": "string", "example": "CERT-2026-000001" },
+          "certificateId": { "type": "string", "example": "CERT-TEST-2026-000001" },
           "valid": { "type": "boolean", "example": true },
           "status": { "type": "string", "example": "ACTIVE" },
           "message": { "type": "string", "example": "certificate is valid" }
@@ -819,28 +819,28 @@
       "DatabaseCertificate": {
         "type": "object",
         "properties": {
-          "id": { "type": "string", "example": "550e8400-e29b-41d4-a716-446655440000" },
-          "certificateId": { "type": "string", "example": "CERT-2026-000001" },
-          "certificateNumber": { "type": "string", "example": "0010084122122026100006" },
-          "studentName": { "type": "string", "example": "MAYAKA PUTY DANUZKYA" },
-          "studentId": { "type": "string", "example": "23020122130052" },
-          "graduationDate": { "type": "string", "example": "2025-12-16" },
-          "studyProgram": { "type": "string", "example": "Program Sarjana Teknologi Pangan" },
-          "faculty": { "type": "string", "example": "Fakultas Peternakan dan Pertanian" },
+          "id": { "type": "string", "example": "11111111-2222-3333-4444-555555555555" },
+          "certificateId": { "type": "string", "example": "CERT-TEST-2026-000001" },
+          "certificateNumber": { "type": "string", "example": "TEST-2026-000001" },
+          "studentName": { "type": "string", "example": "TEST STUDENT" },
+          "studentId": { "type": "string", "example": "23000000000000" },
+          "graduationDate": { "type": "string", "example": "2026-06-30" },
+          "studyProgram": { "type": "string", "example": "Program Studi Contoh" },
+          "faculty": { "type": "string", "example": "Fakultas Contoh" },
           "degreeLevel": { "type": "string", "example": "S1" },
-          "degreeName": { "type": "string", "example": "Sarjana Teknologi Pangan" },
-          "degreeAbbreviation": { "type": "string", "example": "S.T.P." },
-          "universityName": { "type": "string", "example": "Universitas Diponegoro" },
-          "universityAccreditationNumber": { "type": "string", "example": "106/SK/BAN-PT/Ak.Ppj/PT/II/2023" },
-          "programAccreditationAgency": { "type": "string", "example": "BAN-PT" },
-          "programAccreditationNumber": { "type": "string", "example": "2780/SK/BAN-PT/Akred-Intl/S/VII/2023" },
-          "issueDate": { "type": "string", "example": "2026-01-15" },
-          "deanName": { "type": "string", "example": "Prof. Sugiharto, S.Pt., M.Sc., Ph.D." },
-          "rectorName": { "type": "string", "example": "Prof. Dr. Suharnomo, S.E., M.Si." },
-          "fileName": { "type": "string", "example": "0010084122122026100006.pdf" },
-          "ipfsCid": { "type": "string", "example": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx" },
+          "degreeName": { "type": "string", "example": "Sarjana Contoh" },
+          "degreeAbbreviation": { "type": "string", "example": "S.C." },
+          "universityName": { "type": "string", "example": "Universitas Contoh" },
+          "universityAccreditationNumber": { "type": "string", "example": "ACC-UNIV-TEST-001" },
+          "programAccreditationAgency": { "type": "string", "example": "Example Accreditation Agency" },
+          "programAccreditationNumber": { "type": "string", "example": "ACC-PROGRAM-TEST-001" },
+          "issueDate": { "type": "string", "example": "2026-07-15" },
+          "deanName": { "type": "string", "example": "Prof. Example Dean" },
+          "rectorName": { "type": "string", "example": "Prof. Example Rector" },
+          "fileName": { "type": "string", "example": "TEST-2026-000001.pdf" },
+          "ipfsCid": { "type": "string", "example": "bafybeigdummydocumentcid000000000000000000000000000" },
           "ledgerTxId": { "type": "string", "nullable": true, "example": "e54d1b5d5f90fba0d1xxxxxxxxxxxx" },
-          "issuer": { "type": "string", "example": "Universitas Diponegoro" },
+          "issuer": { "type": "string", "example": "Universitas Contoh" },
           "status": { "type": "string", "example": "VALID" },
           "createdAt": { "type": "string", "example": "2026-06-30T10:15:23Z" },
           "updatedAt": { "type": "string", "example": "2026-06-30T10:15:23Z" }

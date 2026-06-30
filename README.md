@@ -117,28 +117,28 @@ multipart/form-data
   "success": true,
   "message": "Certificate uploaded successfully",
   "data": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "certificateId": "CERT-2026-000001",
-    "certificateNumber": "0****************",
-    "studentName": "M*** ***** *******",
-    "studentId": "2********",
-    "graduationDate": "2***-**-**",
-    "studyProgram": "Program Sarjana **************",
-    "faculty": "Fakultas **************",
-    "degreeLevel": "S*",
-    "degreeName": "Sarjana ************",
-    "degreeAbbreviation": "S.***",
-    "universityName": "U**************",
-    "universityAccreditationNumber": "**************",
-    "programAccreditationAgency": "BAN-PT",
-    "programAccreditationNumber": "******************",
-    "issueDate": "2***-**-**",
-    "deanName": "Prof. S**************.",
-    "rectorName": "Prof. Dr. S**********.",
-    "fileName": "0010084122122026100006.pdf",
-    "ipfsCid": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx",
+    "id": "11111111-2222-3333-4444-555555555555",
+    "certificateId": "CERT-TEST-2026-000001",
+    "certificateNumber": "TEST-2026-000001",
+    "studentName": "TEST STUDENT",
+    "studentId": "23000000000000",
+    "graduationDate": "2026-06-30",
+    "studyProgram": "Program Studi Contoh",
+    "faculty": "Fakultas Contoh",
+    "degreeLevel": "S1",
+    "degreeName": "Sarjana Contoh",
+    "degreeAbbreviation": "S.C.",
+    "universityName": "Universitas Contoh",
+    "universityAccreditationNumber": "ACC-UNIV-TEST-001",
+    "programAccreditationAgency": "Example Accreditation Agency",
+    "programAccreditationNumber": "ACC-PROGRAM-TEST-001",
+    "issueDate": "2026-07-15",
+    "deanName": "Prof. Example Dean",
+    "rectorName": "Prof. Example Rector",
+    "fileName": "certificate-test.pdf",
+    "ipfsCid": "bafybeigdummydocumentcid000000000000000000000000000",
     "ledgerTxId": null,
-    "issuer": "U**************",
+    "issuer": "Universitas Contoh",
     "status": "VALID",
     "createdAt": "2026-06-30T10:15:23.000Z",
     "updatedAt": "2026-06-30T10:15:23.000Z"
@@ -193,7 +193,7 @@ Used when the frontend already has an IPFS CID and wants to send it directly to 
 
 ```json
 {
-  "ipfsCid": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx"
+  "ipfsCid": "bafybeigdummydocumentcid000000000000000000000000000"
 }
 ```
 

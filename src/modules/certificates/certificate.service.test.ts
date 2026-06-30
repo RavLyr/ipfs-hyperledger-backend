@@ -50,16 +50,16 @@ describe('certificate lifecycle chaincode mapping', () => {
     const service = createCertificateService(gateway);
 
     await service.registerIssuer({
-      issuer: 'Universitas Diponegoro',
-      universityName: 'Universitas Diponegoro',
-      faculty: 'Fakultas Peternakan dan Pertanian'
+      issuer: 'Universitas Contoh',
+      universityName: 'Universitas Contoh',
+      faculty: 'Fakultas Contoh'
     });
 
     assert.deepEqual(calls, [
       {
         mode: 'submit',
         functionName: 'SmartContract:RegisterIssuer',
-        args: ['Universitas Diponegoro', 'Universitas Diponegoro', 'Fakultas Peternakan dan Pertanian', 'Org1MSP']
+        args: ['Universitas Contoh', 'Universitas Contoh', 'Fakultas Contoh', 'Org1MSP']
       }
     ]);
   });
@@ -68,25 +68,25 @@ describe('certificate lifecycle chaincode mapping', () => {
     const { gateway, calls } = createMockGateway();
     const service = createCertificateService(gateway);
     const input = parseIssueCertificateBody({
-      certificateId: 'CERT-001',
-      certificateNumber: '0010084122122026100006',
-      studentName: 'MAYAKA PUTY DANUZKYA',
-      studentId: '23020122130052',
-      graduationDate: '2025-12-16',
-      studyProgram: 'Program Sarjana Teknologi Pangan',
-      faculty: 'Fakultas Peternakan dan Pertanian',
+      certificateId: 'CERT-TEST-2026-000001',
+      certificateNumber: 'TEST-2026-000001',
+      studentName: 'TEST STUDENT',
+      studentId: '23000000000000',
+      graduationDate: '2026-06-30',
+      studyProgram: 'Program Studi Contoh',
+      faculty: 'Fakultas Contoh',
       degreeLevel: 'S1',
-      degreeName: 'Sarjana Teknologi Pangan',
-      degreeAbbreviation: 'S.T.P.',
-      universityName: 'Universitas Diponegoro',
-      universityAccreditationNumber: '106/SK/BAN-PT/Ak.Ppj/PT/II/2023',
-      programAccreditationAgency: 'BAN-PT',
-      programAccreditationNumber: '2780/SK/BAN-PT/Akred-Intl/S/VII/2023',
-      issueDate: '2026-01-15',
-      deanName: 'Prof. Sugiharto, S.Pt., M.Sc., Ph.D.',
-      rectorName: 'Prof. Dr. Suharnomo, S.E., M.Si.',
-      issuer: 'Universitas Diponegoro',
-      ipfsCid: 'bafy-certificate'
+      degreeName: 'Sarjana Contoh',
+      degreeAbbreviation: 'S.C.',
+      universityName: 'Universitas Contoh',
+      universityAccreditationNumber: 'ACC-UNIV-TEST-001',
+      programAccreditationAgency: 'Example Accreditation Agency',
+      programAccreditationNumber: 'ACC-PROGRAM-TEST-001',
+      issueDate: '2026-07-15',
+      deanName: 'Prof. Example Dean',
+      rectorName: 'Prof. Example Rector',
+      issuer: 'Universitas Contoh',
+      ipfsCid: 'bafybeigdummydocumentcid000000000000000000000000000'
     });
 
     await service.issueCertificate(input);
@@ -96,14 +96,14 @@ describe('certificate lifecycle chaincode mapping', () => {
         mode: 'submit',
         functionName: 'SmartContract:IssueCertificate',
         args: [
-          'CERT-001',
-          '0010084122122026100006',
-          'ac3da95c7f09c03f2ddcf45a22c8a59ceca7ca170f4f14c0b9ff3220f701f829',
-          'Universitas Diponegoro',
+          'CERT-TEST-2026-000001',
+          'TEST-2026-000001',
+          '74a73373a8e2abaf3802e05420c3c9abdec2473005841794a2d5027e529dbfe1',
+          'Universitas Contoh',
           'S1',
-          'Sarjana Teknologi Pangan',
-          'bafy-certificate',
-          '2026-01-15',
+          'Sarjana Contoh',
+          'bafybeigdummydocumentcid000000000000000000000000000',
+          '2026-07-15',
           ''
         ]
       }
@@ -126,25 +126,25 @@ describe('certificate lifecycle chaincode mapping', () => {
 
     await assert.rejects(
       service.issueCertificate({
-        certificateId: 'CERT-001',
-        certificateNumber: '0010084122122026100006',
-        studentName: 'MAYAKA PUTY DANUZKYA',
-        studentId: '23020122130052',
-        graduationDate: '2025-12-16',
-        studyProgram: 'Program Sarjana Teknologi Pangan',
-        faculty: 'Fakultas Peternakan dan Pertanian',
+        certificateId: 'CERT-TEST-2026-000001',
+        certificateNumber: 'TEST-2026-000001',
+        studentName: 'TEST STUDENT',
+        studentId: '23000000000000',
+        graduationDate: '2026-06-30',
+        studyProgram: 'Program Studi Contoh',
+        faculty: 'Fakultas Contoh',
         degreeLevel: 'S1',
-        degreeName: 'Sarjana Teknologi Pangan',
-        degreeAbbreviation: 'S.T.P.',
-        universityName: 'Universitas Diponegoro',
-        universityAccreditationNumber: '106/SK/BAN-PT/Ak.Ppj/PT/II/2023',
-        programAccreditationAgency: 'BAN-PT',
-        programAccreditationNumber: '2780/SK/BAN-PT/Akred-Intl/S/VII/2023',
-        issueDate: '2026-01-15',
-        deanName: 'Prof. Sugiharto, S.Pt., M.Sc., Ph.D.',
-        rectorName: 'Prof. Dr. Suharnomo, S.E., M.Si.',
+        degreeName: 'Sarjana Contoh',
+        degreeAbbreviation: 'S.C.',
+        universityName: 'Universitas Contoh',
+        universityAccreditationNumber: 'ACC-UNIV-TEST-001',
+        programAccreditationAgency: 'Example Accreditation Agency',
+        programAccreditationNumber: 'ACC-PROGRAM-TEST-001',
+        issueDate: '2026-07-15',
+        deanName: 'Prof. Example Dean',
+        rectorName: 'Prof. Example Rector',
         issuer: 'UNKNOWN',
-        ipfsCid: 'bafy-certificate'
+        ipfsCid: 'bafybeigdummydocumentcid000000000000000000000000000'
       }),
       (err: unknown) => err instanceof AppError && err.statusCode === 404
     );
@@ -152,9 +152,9 @@ describe('certificate lifecycle chaincode mapping', () => {
 
   it('verifies certificate with VerifyCertificate evaluate transaction', async () => {
     const expected = {
-      certificateId: 'CERT-001',
+      certificateId: 'CERT-TEST-2026-000001',
       valid: true,
-      status: 'ACTIVE',
+      status: 'VALID',
       message: 'certificate is valid',
       issuedAt: '2026-06-18T00:00:00Z',
       revoked: false,
@@ -163,14 +163,14 @@ describe('certificate lifecycle chaincode mapping', () => {
     const { gateway, calls } = createMockGateway({ VerifyCertificate: expected });
     const service = createCertificateService(gateway);
 
-    const result = await service.verifyCertificate({ certificateId: 'CERT-001', ipfsCid: 'ipfs-cid' });
+    const result = await service.verifyCertificate({ certificateId: 'CERT-TEST-2026-000001', ipfsCid: 'bafybeigdummydocumentcid000000000000000000000000000' });
 
     assert.equal(result, expected);
     assert.deepEqual(calls, [
       {
         mode: 'evaluate',
         functionName: 'SmartContract:VerifyCertificate',
-        args: ['CERT-001', 'ipfs-cid']
+        args: ['CERT-TEST-2026-000001', 'bafybeigdummydocumentcid000000000000000000000000000']
       }
     ]);
   });
@@ -179,7 +179,7 @@ describe('certificate lifecycle chaincode mapping', () => {
     const { gateway, calls } = createMockGateway();
     const service = createCertificateService(gateway);
     const input = parseRevokeCertificateBody(
-      { certificateId: 'CERT-001' },
+      { certificateId: 'CERT-TEST-2026-000001' },
       { reasonHash: 'reason-hash', revokedAt: '2026-06-18T01:00:00Z' }
     );
 
@@ -189,7 +189,7 @@ describe('certificate lifecycle chaincode mapping', () => {
       {
         mode: 'submit',
         functionName: 'SmartContract:RevokeCertificate',
-        args: ['CERT-001', 'reason-hash', '2026-06-18T01:00:00Z']
+        args: ['CERT-TEST-2026-000001', 'reason-hash', '2026-06-18T01:00:00Z']
       }
     ]);
   });
@@ -199,10 +199,10 @@ describe('certificate lifecycle chaincode mapping', () => {
     const service = createCertificateService(gateway);
 
     await service.reissueCertificate({
-      oldCertificateId: 'CERT-001',
-      newCertificateId: 'CERT-002',
-      newCertificateNumber: 'NO-002',
-      newIpfsCid: 'bafy-new',
+      oldCertificateId: 'CERT-TEST-2026-000001',
+      newCertificateId: 'CERT-TEST-2026-000002',
+      newCertificateNumber: 'TEST-2026-000001',
+      newIpfsCid: 'bafybeigdummydocumentcid000000000000000000000000000',
       reasonHash: 'reason-hash',
       reissuedAt: '2026-06-18T02:00:00Z'
     });
@@ -211,7 +211,7 @@ describe('certificate lifecycle chaincode mapping', () => {
       {
         mode: 'submit',
         functionName: 'SmartContract:ReissueCertificate',
-        args: ['CERT-001', 'CERT-002', 'NO-002', 'bafy-new', 'reason-hash', '2026-06-18T02:00:00Z']
+        args: ['CERT-TEST-2026-000001', 'CERT-TEST-2026-000002', 'TEST-2026-000001', 'bafybeigdummydocumentcid000000000000000000000000000', 'reason-hash', '2026-06-18T02:00:00Z']
       }
     ]);
   });
@@ -220,27 +220,27 @@ describe('certificate lifecycle chaincode mapping', () => {
 describe('certificate metadata validation', () => {
   it('parses upload metadata using the new backend contract', () => {
     const input = parseUploadCertificateBody({
-      certificateId: 'CERT-001',
-      certificateNumber: '0010084122122026100006',
-      studentName: 'MAYAKA PUTY DANUZKYA',
-      studentId: '23020122130052',
-      graduationDate: '2025-12-16',
-      studyProgram: 'Program Sarjana Teknologi Pangan',
-      faculty: 'Fakultas Peternakan dan Pertanian',
+      certificateId: 'CERT-TEST-2026-000001',
+      certificateNumber: 'TEST-2026-000001',
+      studentName: 'TEST STUDENT',
+      studentId: '23000000000000',
+      graduationDate: '2026-06-30',
+      studyProgram: 'Program Studi Contoh',
+      faculty: 'Fakultas Contoh',
       degreeLevel: 'S1',
-      degreeName: 'Sarjana Teknologi Pangan',
-      degreeAbbreviation: 'S.T.P.',
-      universityName: 'Universitas Diponegoro',
-      universityAccreditationNumber: '106/SK/BAN-PT/Ak.Ppj/PT/II/2023',
-      programAccreditationAgency: 'BAN-PT',
-      programAccreditationNumber: '2780/SK/BAN-PT/Akred-Intl/S/VII/2023',
-      issueDate: '2026-01-15',
-      deanName: 'Prof. Sugiharto, S.Pt., M.Sc., Ph.D.',
-      rectorName: 'Prof. Dr. Suharnomo, S.E., M.Si.',
-      issuer: 'Universitas Diponegoro'
+      degreeName: 'Sarjana Contoh',
+      degreeAbbreviation: 'S.C.',
+      universityName: 'Universitas Contoh',
+      universityAccreditationNumber: 'ACC-UNIV-TEST-001',
+      programAccreditationAgency: 'Example Accreditation Agency',
+      programAccreditationNumber: 'ACC-PROGRAM-TEST-001',
+      issueDate: '2026-07-15',
+      deanName: 'Prof. Example Dean',
+      rectorName: 'Prof. Example Rector',
+      issuer: 'Universitas Contoh'
     });
 
-    assert.equal(input.issueDate, '2026-01-15');
-    assert.equal(input.issuer, 'Universitas Diponegoro');
+    assert.equal(input.issueDate, '2026-07-15');
+    assert.equal(input.issuer, 'Universitas Contoh');
   });
 });
