@@ -48,6 +48,16 @@ cp .env.example .env
 
 Modify database credentials and ports as needed.
 
+For the current local workspace, the minimum `.env` values are:
+
+```env
+DB_PASSWORD=password
+IPFS_GATEWAY_PORT=8081
+IPFS_GATEWAY_URL=http://localhost:8081
+FABRIC_DOCKER_NETWORK=fabric_migration_net
+FABRIC_CRYPTO_HOST_PATH=../hyperleger-fabric-ipfs/organization
+```
+
 ---
 
 ## 3. Start Infrastructure Services (Database, IPFS, and Backend)
@@ -61,30 +71,33 @@ docker compose up -d
 Services will be available at:
 
 * Backend API: `http://localhost:3000`
-* IPFS Gateway: `http://localhost:8081` (or `http://localhost:8080`)
+* IPFS Gateway: `http://localhost:8081`
 * PostgreSQL: `localhost:5433` (internal container port `5432`)
 
 ---
 
 ## 4. Start the Blockchain Network (Hyperledger Fabric)
 
-Run the blockchain Docker Compose configuration:
+Run the blockchain Docker Compose configuration from the sibling Fabric repository:
 
 ```bash
-docker compose -f blockchain/docker-compose.yaml up -d
+cd ../hyperleger-fabric-ipfs
+docker compose up -d
 ```
 
-This starts:
+Current local Fabric runtime:
 
-* Peer nodes
-* Orderer nodes
-* Chaincode v1.2
+* Docker network: `fabric_migration_net`
+* Channel: `appchannel-etcdraft`
+* Chaincode: `ijazah`
+* Current committed definition: version `2.0`, sequence `5`
+* Endorsement policy: `OR('Org1MSP.peer','Org2MSP.peer')`
 
 ---
 
 ## 5. Initialize the Ledger
 
-Before using the system, initialize the blockchain ledger to register the demo issuer account:
+Before using a fresh ledger, initialize the blockchain ledger to register the demo issuer account. This is idempotent for `DEMO_ISSUER`:
 
 ```bash
 curl -X POST http://localhost:3000/api/ledger/init
@@ -196,7 +209,7 @@ If `valid` is `true`, the certificate PDF can be rendered directly using `docume
 POST /api/certificates/:certificateId/verify
 ```
 
-Used when the frontend calculates the document CID locally (client-side hashing) and sends it directly to the blockchain for authenticity verification.
+Used when the frontend already has an IPFS CID and sends it directly to the blockchain for authenticity verification.
 
 ### Request Body
 
@@ -206,7 +219,7 @@ Used when the frontend calculates the document CID locally (client-side hashing)
 }
 ```
 
-Replace the value with the CID generated from the uploaded PDF.
+Replace the value with the IPFS CID generated for the uploaded PDF.
 
 ### Valid Document Response
 
@@ -233,7 +246,7 @@ Replace the value with the CID generated from the uploaded PDF.
     "certificateId": "2d5a3d1e-3221-44f7-8f3b-e13a0393d625",
     "valid": false,
     "status": "ACTIVE",
-    "message": "document hash does not match certificate record",
+    "message": "IPFS CID does not match certificate record",
     "revoked": false,
     "tampered": true
   }
@@ -275,4 +288,4 @@ The following npm scripts are available in the project root:
 * Manual document authenticity verification using IPFS CID
 * Dockerized deployment environment
 
-This architecture combines the strengths of decentralized storage, blockchain immutability, and traditional database performance. A surprisingly rare case of technologies cooperating instead of starting a turf war over whose responsibility the data is.
+This architecture combines decentralized storage, blockchain immutability, and traditional database performance while keeping `ipfsCid` as the single document fingerprint.

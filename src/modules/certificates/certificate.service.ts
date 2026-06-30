@@ -10,7 +10,6 @@ import type {
   CertificateTextInput,
   IssueCertificateInput,
   RegisterIssuerInput,
-  ReissueCertificateInput,
   RevokeCertificateInput,
   VerifyCertificateInput
 } from './certificate.dto';
@@ -42,7 +41,11 @@ const REQUIRED_UPLOAD_FIELDS = [
   'departmentName',
   'mspId',
   'certificateType',
-  'title',
+  'degreeTitle',
+  'studentId',
+  'studentName',
+  'studyProgram',
+  'educationLevel',
   'issuedAt',
 ] as const;
 
@@ -180,20 +183,6 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
       return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetRevocationInfo'), certificateId));
     },
 
-    reissueCertificate(input: ReissueCertificateInput): Promise<FabricResult> {
-      return runFabric(() =>
-        gateway.submitTransaction(
-          chaincodeFunction('ReissueCertificate'),
-          input.oldCertificateId,
-          input.newCertificateId,
-          input.newCertificateNumber,
-          input.newIpfsCid,
-          input.reasonHash,
-          input.reissuedAt
-        )
-      );
-    },
-
     getCertificateHistory(certificateId: string): Promise<FabricResult> {
       return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetCertificateHistory'), certificateId));
     },
@@ -218,7 +207,7 @@ export async function uploadCertificate(
     throw new Error('file_ijazah is required');
   }
 
-  const input = validateCertificateBody(body, file.buffer);
+  const input = validateCertificateBody(body);
   const existingCertificate = await findCertificateByCertificateNumber(input.certificateNumber);
 
   if (existingCertificate) {
@@ -240,18 +229,18 @@ export async function uploadCertificate(
   const fabricTransaction = await certificateService.issueCertificateWithTxId({
     certificateId: input.certificateId,
     certificateNumber: input.certificateNumber,
-    studentIdHash: input.studentIdHash,
+    studentIdHash: sha256Hex(input.studentId),
     issuerId: input.issuerId,
     certificateType: input.certificateType,
-    title: input.title,
+    title: input.degreeTitle,
     ipfsCid,
     issuedAt: input.issuedAt,
-    expiredAt: input.expiredAt,
+    expiredAt: ''
   });
 
   return insertCertificate({
     ...input,
-    documentHash: ipfsCid, // Treat ipfsCid as the documentHash
+    documentHash: ipfsCid,
     ipfsCid,
     file_name: file.originalname,
     mime_type: file.mimetype,
@@ -277,7 +266,7 @@ export async function getAllCertificatesService(issuerId?: string): Promise<Cert
   return findAllCertificates(issuerId);
 }
 
-function validateCertificateBody(body: RawBody, fileBuffer: Buffer): CertificateTextInput {
+function validateCertificateBody(body: RawBody): CertificateTextInput {
   const missingFields = REQUIRED_UPLOAD_FIELDS.filter((field) => {
     const value = body[field];
     return typeof value !== 'string' || value.trim() === '';
@@ -288,20 +277,14 @@ function validateCertificateBody(body: RawBody, fileBuffer: Buffer): Certificate
   }
 
   const issuedAt = clean(body.issuedAt);
-  const expiredAt = clean(body.expiredAt);
-  const studentIdHash = readHashOrRaw(body, 'studentIdHash', 'studentId');
-  const documentHash = clean(body.documentHash) || sha256Hex(fileBuffer);
-
-  if (!studentIdHash) {
-    throw new Error('studentIdHash is required, or provide studentId so backend can hash it');
-  }
+  const graduationDate = clean(body.graduationDate);
 
   if (!isValidDateOnly(issuedAt)) {
     throw new Error('issuedAt must use YYYY-MM-DD format');
   }
 
-  if (expiredAt && !isValidDateOnly(expiredAt)) {
-    throw new Error('expiredAt must use YYYY-MM-DD format');
+  if (graduationDate && !isValidDateOnly(graduationDate)) {
+    throw new Error('graduationDate must use YYYY-MM-DD format');
   }
 
   return {
@@ -312,13 +295,14 @@ function validateCertificateBody(body: RawBody, fileBuffer: Buffer): Certificate
     departmentName: clean(body.departmentName),
     mspId: clean(body.mspId),
     certificateType: clean(body.certificateType),
-    title: clean(body.title),
-    studentIdHash,
-    documentHash,
+    degreeTitle: clean(body.degreeTitle),
+    studentId: clean(body.studentId),
+    studentName: clean(body.studentName),
+    universityName: clean(body.universityName),
+    studyProgram: clean(body.studyProgram),
+    educationLevel: clean(body.educationLevel),
+    graduationDate,
     issuedAt,
-    expiredAt,
-    previousCertificateId: clean(body.previousCertificateId) || undefined,
-    replacementCertificateId: clean(body.replacementCertificateId) || undefined,
   };
 }
 

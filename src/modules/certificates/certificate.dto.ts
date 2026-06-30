@@ -33,15 +33,6 @@ export type RevokeCertificateInput = {
   readonly revokedAt: string;
 };
 
-export type ReissueCertificateInput = {
-  readonly oldCertificateId: string;
-  readonly newCertificateId: string;
-  readonly newCertificateNumber: string;
-  readonly newIpfsCid: string;
-  readonly reasonHash: string;
-  readonly reissuedAt: string;
-};
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -72,18 +63,6 @@ function readHashedValue(source: Record<string, unknown>, hashField: string, raw
   const rawValue = readNonEmptyString(source, rawField);
 
   return rawValue ? sha256Hex(rawValue) : undefined;
-}
-
-function readDocumentHash(source: Record<string, unknown>, hashField: string, base64Field: string): string | undefined {
-  const hash = readNonEmptyString(source, hashField);
-
-  if (hash) {
-    return hash;
-  }
-
-  const documentBase64 = readNonEmptyString(source, base64Field);
-
-  return documentBase64 ? sha256Hex(Buffer.from(documentBase64, 'base64')) : undefined;
 }
 
 function validationError(details: unknown): AppError {
@@ -146,7 +125,7 @@ export function parseIssueCertificateBody(body: unknown): IssueCertificateInput 
     studentIdHash,
     issuerId: readRequiredString(body, 'issuerId'),
     certificateType: readRequiredString(body, 'certificateType'),
-    title: readRequiredString(body, 'title'),
+    title: readRequiredString(body, 'degreeTitle'),
     ipfsCid: readRequiredString(body, 'ipfsCid'),
     issuedAt: readRequiredString(body, 'issuedAt'),
     expiredAt: readNonEmptyString(body, 'expiredAt') ?? ''
@@ -156,7 +135,7 @@ export function parseIssueCertificateBody(body: unknown): IssueCertificateInput 
 export function parseVerifyCertificateBody(params: unknown, body: unknown): VerifyCertificateInput {
   const certificateId = parseCertificateIdParams(params);
   const source = isRecord(body) ? body : {};
-  const ipfsCid = readNonEmptyString(source, 'ipfsCid') ?? readDocumentHash(source, 'documentHash', 'documentBase64') ?? '';
+  const ipfsCid = readNonEmptyString(source, 'ipfsCid') ?? '';
 
   return { certificateId, ipfsCid };
 }
@@ -185,32 +164,6 @@ export function parseRevokeCertificateBody(params: unknown, body: unknown): Revo
   };
 }
 
-export function parseReissueCertificateBody(params: unknown, body: unknown): ReissueCertificateInput {
-  const oldCertificateId = parseCertificateIdParams(params);
-
-  if (!isRecord(body)) {
-    throw validationError({ body: 'Expected object' });
-  }
-
-  const reasonHash = readHashedValue(body, 'reasonHash', 'reason');
-
-  if (!reasonHash) {
-    throw validationError({
-      body: {
-        reasonHash: 'Required non-empty string, or provide reason so backend can hash it'
-      }
-    });
-  }
-
-  return {
-    oldCertificateId,
-    newCertificateId: readNonEmptyString(body, 'newCertificateId') ?? randomUUID(),
-    newCertificateNumber: readRequiredString(body, 'newCertificateNumber'),
-    newIpfsCid: readRequiredString(body, 'newIpfsCid'),
-    reasonHash,
-    reissuedAt: readNonEmptyString(body, 'reissuedAt') ?? new Date().toISOString()
-  };
-}
 export type CertificateStatus = "VALID" | "REVOKED";
 
 export interface Certificate {
@@ -219,8 +172,13 @@ export interface Certificate {
   certificateNumber: string;
   issuerId: string;
   certificateType: string;
-  title: string;
-  studentIdHash: string;
+  degreeTitle: string;
+  studentId: string;
+  studentName: string;
+  universityName: string;
+  studyProgram: string;
+  educationLevel: string;
+  graduationDate: string | null;
   documentHash: string;
   ipfsCid: string;
   file_name: string | null;
@@ -229,9 +187,6 @@ export interface Certificate {
   ledger_tx_id: string;
   status: CertificateStatus;
   issuedAt: string;
-  expiredAt: string | null;
-  previousCertificateId: string | null;
-  replacementCertificateId: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -244,16 +199,18 @@ export interface CertificateTextInput {
   departmentName: string;
   mspId: string;
   certificateType: string;
-  title: string;
-  studentIdHash: string;
-  documentHash: string;
+  degreeTitle: string;
+  studentId: string;
+  studentName: string;
+  universityName: string;
+  studyProgram: string;
+  educationLevel: string;
+  graduationDate: string;
   issuedAt: string;
-  expiredAt: string;
-  previousCertificateId?: string;
-  replacementCertificateId?: string;
 }
 
 export interface CreateCertificateInput extends CertificateTextInput {
+  documentHash: string;
   ipfsCid: string;
   file_name: string;
   mime_type: string;

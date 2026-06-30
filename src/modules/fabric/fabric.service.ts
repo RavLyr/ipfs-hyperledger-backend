@@ -7,12 +7,11 @@ import type { FabricHealth, FabricInvokeResult } from './fabric.types';
 const fabricClient = new FabricGatewayClient(fabricConfig);
 
 export async function getFabricHealth(): Promise<FabricHealth> {
-  const certificates = await evaluateTransaction('GetAllCertificates');
-  const itemCount = Array.isArray(certificates) ? certificates.length : null;
+  const demoIssuerExists = await evaluateTransaction('SmartContract:IssuerExists', 'DEMO_ISSUER');
 
   return {
-    status: 'connected',
-    itemCount
+    status: demoIssuerExists === true || demoIssuerExists === 'true' ? 'connected' : 'degraded',
+    itemCount: null
   };
 }
 
