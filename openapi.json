@@ -589,13 +589,16 @@
                   "departmentName": { "type": "string", "example": "Academic Office" },
                   "mspId": { "type": "string", "example": "Org1MSP" },
                   "certificateType": { "type": "string", "example": "DIPLOMA" },
-                  "title": { "type": "string", "example": "Bachelor of Computer Science" },
+                  "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
                   "studentId": { "type": "string", "description": "NIM Mahasiswa (raw, backend otomatis akan meng-hash ke StudentIdHash)", "example": "NIM-12345" },
+                  "studentName": { "type": "string", "example": "John Doe" },
+                  "studyProgram": { "type": "string", "example": "Teknik Informatika" },
+                  "educationLevel": { "type": "string", "example": "S1" },
                   "studentIdHash": { "type": "string", "description": "Hash Student ID jika frontend sudah melakukan hashing lokal", "example": "a4d3..." },
                   "issuedAt": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD", "example": "2026-06-27" },
                   "expiredAt": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD (opsional)", "example": "" }
                 },
-                "required": ["file_ijazah", "certificateNumber", "issuerId", "organizationName", "departmentName", "mspId", "certificateType", "title", "issuedAt"]
+                "required": ["file_ijazah", "certificateNumber", "issuerId", "organizationName", "departmentName", "mspId", "certificateType", "degreeTitle", "issuedAt"]
               }
             }
           }
@@ -798,12 +801,12 @@
           "studentIdHash": { "type": "string", "example": "a4d3..." },
           "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
           "certificateType": { "type": "string", "example": "DIPLOMA" },
-          "title": { "type": "string", "example": "Bachelor of Computer Science" },
+          "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
           "ipfsCid": { "type": "string", "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea" },
           "issuedAt": { "type": "string", "example": "2026-06-27" },
           "expiredAt": { "type": "string", "example": "" }
         },
-        "required": ["certificateNumber", "issuerId", "certificateType", "title", "ipfsCid", "issuedAt"]
+        "required": ["certificateNumber", "issuerId", "certificateType", "degreeTitle", "ipfsCid", "issuedAt"]
       },
       "LedgerCertificateAsset": {
         "type": "object",
@@ -833,7 +836,13 @@
           "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
           "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
           "certificateType": { "type": "string", "example": "DIPLOMA" },
-          "title": { "type": "string", "example": "Bachelor of Computer Science" },
+          "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
+          "studentId": { "type": "string", "example": "NIM-12345" },
+          "studentName": { "type": "string", "example": "John Doe" },
+          "universityName": { "type": "string", "example": "Demo University" },
+          "studyProgram": { "type": "string", "example": "Teknik Informatika" },
+          "educationLevel": { "type": "string", "example": "S1" },
+          "graduationDate": { "type": "string", "nullable": true, "example": null },
           "studentIdHash": { "type": "string", "example": "a4d3..." },
           "ipfsCid": { "type": "string", "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea" },
           "file_name": { "type": "string", "example": "ijazah.pdf" },
