@@ -120,8 +120,7 @@ describe('certificate lifecycle chaincode mapping', () => {
         certificateType: 'DIPLOMA',
         title: 'Bachelor Certificate',
         ipfsCid: 'bafy-certificate',
-        issuedAt: '2026-06-18T00:00:00Z',
-        expiredAt: ''
+        issuedAt: '2026-06-18T00:00:00Z'
       }),
       (err: unknown) => err instanceof AppError && err.statusCode === 404
     );

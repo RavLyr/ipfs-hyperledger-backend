@@ -19,7 +19,6 @@ export type IssueCertificateInput = {
   readonly title: string;
   readonly ipfsCid: string;
   readonly issuedAt: string;
-  readonly expiredAt: string;
 };
 
 export type VerifyCertificateInput = {
@@ -134,10 +133,9 @@ export function parseIssueCertificateBody(body: unknown): IssueCertificateInput 
     studentIdHash,
     issuerId: readRequiredString(body, 'issuerId'),
     certificateType: readRequiredString(body, 'certificateType'),
-    title: readRequiredString(body, 'title'),
+    title: readRequiredString(body, 'degreeTitle'),
     ipfsCid: readRequiredString(body, 'ipfsCid'),
-    issuedAt: readRequiredString(body, 'issuedAt'),
-    expiredAt: readNonEmptyString(body, 'expiredAt') ?? ''
+    issuedAt: readRequiredString(body, 'issuedAt')
   };
 }
 
@@ -207,8 +205,13 @@ export interface Certificate {
   certificateNumber: string;
   issuerId: string;
   certificateType: string;
-  title: string;
-  studentIdHash: string;
+  degreeTitle: string;
+  studentId: string;
+  studentName: string;
+  universityName: string;
+  studyProgram: string;
+  educationLevel: string;
+  graduationDate: string | null;
   documentHash: string;
   ipfsCid: string;
   file_name: string | null;
@@ -217,9 +220,6 @@ export interface Certificate {
   ledger_tx_id: string;
   status: CertificateStatus;
   issuedAt: string;
-  expiredAt: string | null;
-  previousCertificateId: string | null;
-  replacementCertificateId: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -232,12 +232,14 @@ export interface CertificateTextInput {
   departmentName: string;
   mspId: string;
   certificateType: string;
-  title: string;
-  studentIdHash: string;
+  degreeTitle: string;
+  studentId: string;
+  studentName: string;
+  universityName: string;
+  studyProgram: string;
+  educationLevel: string;
+  graduationDate: string;
   issuedAt: string;
-  expiredAt: string;
-  previousCertificateId?: string;
-  replacementCertificateId?: string;
 }
 
 export interface CreateCertificateInput extends CertificateTextInput {

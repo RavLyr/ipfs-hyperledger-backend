@@ -42,7 +42,11 @@ const REQUIRED_UPLOAD_FIELDS = [
   'departmentName',
   'mspId',
   'certificateType',
-  'title',
+  'degreeTitle',
+  'studentId',
+  'studentName',
+  'studyProgram',
+  'educationLevel',
   'issuedAt',
 ] as const;
 
@@ -132,7 +136,7 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
           input.title,
           input.ipfsCid,
           input.issuedAt,
-          input.expiredAt
+          "expired"
         )
       );
     },
@@ -151,7 +155,7 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
           input.title,
           input.ipfsCid,
           input.issuedAt,
-          input.expiredAt
+          "expired"
         )
       );
     },
@@ -240,13 +244,12 @@ export async function uploadCertificate(
   const fabricTransaction = await certificateService.issueCertificateWithTxId({
     certificateId: input.certificateId,
     certificateNumber: input.certificateNumber,
-    studentIdHash: input.studentIdHash,
+    studentIdHash: sha256Hex(input.studentId),
     issuerId: input.issuerId,
     certificateType: input.certificateType,
-    title: input.title,
+    title: input.degreeTitle,
     ipfsCid,
     issuedAt: input.issuedAt,
-    expiredAt: input.expiredAt,
   });
 
   return insertCertificate({
@@ -288,19 +291,14 @@ function validateCertificateBody(body: RawBody): CertificateTextInput {
   }
 
   const issuedAt = clean(body.issuedAt);
-  const expiredAt = clean(body.expiredAt);
-  const studentIdHash = readHashOrRaw(body, 'studentIdHash', 'studentId');
-
-  if (!studentIdHash) {
-    throw new Error('studentIdHash is required, or provide studentId so backend can hash it');
-  }
+  const graduationDate = clean(body.graduationDate);
 
   if (!isValidDateOnly(issuedAt)) {
     throw new Error('issuedAt must use YYYY-MM-DD format');
   }
 
-  if (expiredAt && !isValidDateOnly(expiredAt)) {
-    throw new Error('expiredAt must use YYYY-MM-DD format');
+  if (graduationDate && !isValidDateOnly(graduationDate)) {
+    throw new Error('graduationDate must use YYYY-MM-DD format');
   }
 
   return {
@@ -311,12 +309,14 @@ function validateCertificateBody(body: RawBody): CertificateTextInput {
     departmentName: clean(body.departmentName),
     mspId: clean(body.mspId),
     certificateType: clean(body.certificateType),
-    title: clean(body.title),
-    studentIdHash,
+    degreeTitle: clean(body.degreeTitle),
+    studentId: clean(body.studentId),
+    studentName: clean(body.studentName),
+    universityName: clean(body.universityName),
+    studyProgram: clean(body.studyProgram),
+    educationLevel: clean(body.educationLevel),
+    graduationDate,
     issuedAt,
-    expiredAt,
-    previousCertificateId: clean(body.previousCertificateId) || undefined,
-    replacementCertificateId: clean(body.replacementCertificateId) || undefined,
   };
 }
 

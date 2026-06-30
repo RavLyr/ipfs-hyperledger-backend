@@ -90,7 +90,7 @@ Current local Fabric runtime:
 * Docker network: `fabric_migration_net`
 * Channel: `appchannel-etcdraft`
 * Chaincode: `ijazah`
-* Current committed definition: version `4.0`, sequence `5`
+* Current committed definition: version `2.0`, sequence `5`
 * Endorsement policy: `OR('Org1MSP.peer','Org2MSP.peer')`
 
 ---
