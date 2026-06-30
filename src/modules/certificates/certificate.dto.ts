@@ -33,15 +33,6 @@ export type RevokeCertificateInput = {
   readonly revokedAt: string;
 };
 
-export type ReissueCertificateInput = {
-  readonly oldCertificateId: string;
-  readonly newCertificateId: string;
-  readonly newCertificateNumber: string;
-  readonly newIpfsCid: string;
-  readonly reasonHash: string;
-  readonly reissuedAt: string;
-};
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -173,32 +164,6 @@ export function parseRevokeCertificateBody(params: unknown, body: unknown): Revo
   };
 }
 
-export function parseReissueCertificateBody(params: unknown, body: unknown): ReissueCertificateInput {
-  const oldCertificateId = parseCertificateIdParams(params);
-
-  if (!isRecord(body)) {
-    throw validationError({ body: 'Expected object' });
-  }
-
-  const reasonHash = readHashedValue(body, 'reasonHash', 'reason');
-
-  if (!reasonHash) {
-    throw validationError({
-      body: {
-        reasonHash: 'Required non-empty string, or provide reason so backend can hash it'
-      }
-    });
-  }
-
-  return {
-    oldCertificateId,
-    newCertificateId: readNonEmptyString(body, 'newCertificateId') ?? randomUUID(),
-    newCertificateNumber: readRequiredString(body, 'newCertificateNumber'),
-    newIpfsCid: readRequiredString(body, 'newIpfsCid'),
-    reasonHash,
-    reissuedAt: readNonEmptyString(body, 'reissuedAt') ?? new Date().toISOString()
-  };
-}
 export type CertificateStatus = "VALID" | "REVOKED";
 
 export interface Certificate {

@@ -466,64 +466,6 @@
         }
       }
     },
-    "/api/certificates/{certificateId}/reissue": {
-      "post": {
-        "summary": "Penerbitan Ulang Sertifikat (Reissue)",
-        "description": "Menerbitkan sertifikat baru untuk menggantikan sertifikat aktif yang lama. Sertifikat lama akan otomatis diubah statusnya menjadi REISSUED.",
-        "parameters": [
-          {
-            "name": "certificateId",
-            "in": "path",
-            "required": true,
-            "description": "ID sertifikat lama yang digantikan",
-            "schema": { "type": "string" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "newCertificateId": { "type": "string", "description": "ID sertifikat baru (UUID opsional, digenerate jika kosong)", "example": "e5c6b0fd-a590-48a5-ab85-7cfa8e88e2c0" },
-                  "newCertificateNumber": { "type": "string", "description": "Nomor sertifikat baru", "example": "CERT-2026-TI-0001-REV1" },
-                  "newIpfsCid": { "type": "string", "description": "IPFS CID dokumen baru", "example": "bafkreigz..." },
-                  "reason": { "type": "string", "description": "Alasan penggantian", "example": "Koreksi salah ketik nama" },
-                  "reasonHash": { "type": "string", "description": "Hash SHA256 alasan (opsional)", "example": "f03a6bc..." },
-                  "reissuedAt": { "type": "string", "format": "date-time" }
-                },
-                "required": ["newCertificateNumber", "newIpfsCid"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Certificate reissued successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "message": { "type": "string", "example": "Certificate reissued successfully" },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "oldCertificateId": { "type": "string", "example": "UUID-OLD" },
-                        "newCertificateId": { "type": "string", "example": "UUID-NEW" },
-                        "fabricResult": { "type": "string", "example": "" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/certificates/{certificateId}/history": {
       "get": {
         "summary": "Riwayat Perubahan Audit",

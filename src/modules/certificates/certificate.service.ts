@@ -10,7 +10,6 @@ import type {
   CertificateTextInput,
   IssueCertificateInput,
   RegisterIssuerInput,
-  ReissueCertificateInput,
   RevokeCertificateInput,
   VerifyCertificateInput
 } from './certificate.dto';
@@ -184,20 +183,6 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
       return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetRevocationInfo'), certificateId));
     },
 
-    reissueCertificate(input: ReissueCertificateInput): Promise<FabricResult> {
-      return runFabric(() =>
-        gateway.submitTransaction(
-          chaincodeFunction('ReissueCertificate'),
-          input.oldCertificateId,
-          input.newCertificateId,
-          input.newCertificateNumber,
-          input.newIpfsCid,
-          input.reasonHash,
-          input.reissuedAt
-        )
-      );
-    },
-
     getCertificateHistory(certificateId: string): Promise<FabricResult> {
       return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetCertificateHistory'), certificateId));
     },
@@ -250,6 +235,7 @@ export async function uploadCertificate(
     title: input.degreeTitle,
     ipfsCid,
     issuedAt: input.issuedAt,
+    expiredAt: ''
   });
 
   return insertCertificate({

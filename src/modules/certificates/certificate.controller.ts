@@ -91,21 +91,6 @@ export async function getRevocationInfo(req: Request, res: Response): Promise<vo
   res.json({ success: true, data: result });
 }
 
-export async function reissueCertificate(req: Request, res: Response): Promise<void> {
-  const input = parseReissueCertificateBody(req.params, req.body as unknown);
-  const result = await certificateService.reissueCertificate(input);
-
-  res.status(201).json({
-    success: true,
-    message: 'Certificate reissued successfully',
-    data: {
-      oldCertificateId: input.oldCertificateId,
-      newCertificateId: input.newCertificateId,
-      fabricResult: result
-    }
-  });
-}
-
 export async function getCertificateHistory(req: Request, res: Response): Promise<void> {
   const certificateId = parseCertificateIdParams(req.params);
   const result = await certificateService.getCertificateHistory(certificateId);

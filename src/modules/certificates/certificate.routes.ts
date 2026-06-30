@@ -33,7 +33,6 @@ certificateRoutes.get(
   '/certificates/:certificateId/revocation',
   asyncHandler(certificateController.getRevocationInfo)
 );
-certificateRoutes.post('/certificates/:certificateId/reissue', asyncHandler(certificateController.reissueCertificate));
 certificateRoutes.get('/certificates/:certificateId/history', asyncHandler(certificateController.getCertificateHistory));
 
 certificateRoutes.post(
