@@ -1,28 +1,26 @@
 # 🎓 Academic Certificate Blockchain & IPFS Gateway Backend
 
-An Express + TypeScript backend that connects the Frontend application with **Hyperledger Fabric (Blockchain)**, **IPFS (Decentralized Storage)**, and **PostgreSQL (Metadata Database)** to provide a secure, transparent, and tamper-resistant academic certificate verification system.
+An Express + TypeScript backend that connects the frontend application with **IPFS (Decentralized Storage)**, **PostgreSQL (Metadata Database)**, and a placeholder **Hyperledger Fabric** integration to provide a secure, transparent, and tamper-resistant academic certificate verification system.
 
 ---
 
 # 🏗️ System Architecture & Workflow
 
-This system follows a **hybrid data storage architecture**:
+This system follows a hybrid data storage architecture:
 
 1. **IPFS (InterPlanetary File System)**
+   - Stores the original certificate PDF file.
+   - Generates a unique content identifier (**CID**) for each uploaded document.
 
-   * Stores the original certificate PDF file.
-   * Generates a unique content identifier (**CID**) for each uploaded document.
+2. **PostgreSQL**
+   - Stores the final backend certificate metadata.
+   - Acts as the current source of truth for certificate metadata.
+   - Enables fast searches by certificate number before optional ledger verification.
 
-2. **Hyperledger Fabric (Blockchain Ledger)**
-
-   * Stores the document's digital fingerprint (the IPFS CID) directly as `ipfsCid`.
-   * Ensures document integrity and immutability.
-   * Tracks certificate status (`ACTIVE`, `REVOKED`, etc.).
-
-3. **PostgreSQL**
-
-   * Stores certificate metadata locally.
-   * Enables fast searches (e.g., by Certificate Number) before performing real-time validation against the blockchain.
+3. **Hyperledger Fabric (Placeholder Integration)**
+   - The backend still attempts the legacy Fabric service call during upload and verification.
+   - Fabric failure does **not** block metadata persistence to PostgreSQL.
+   - `ledgerTxId` may remain `null` until Fabric is fully refactored in a later stage.
 
 ---
 
@@ -32,9 +30,9 @@ This system follows a **hybrid data storage architecture**:
 
 Ensure the following software is installed:
 
-* Docker & Docker Compose
-* Node.js (LTS, v20+ recommended)
-* pnpm or npm
+- Docker & Docker Compose
+- Node.js (LTS, v20+ recommended)
+- pnpm or npm
 
 ---
 
@@ -60,45 +58,19 @@ docker compose up -d
 
 Services will be available at:
 
-* Backend API: `http://localhost:3000`
-* IPFS Gateway: `http://localhost:8081` (or `http://localhost:8080`)
-* PostgreSQL: `localhost:5433` (internal container port `5432`)
-
----
-
-## 4. Start the Blockchain Network (Hyperledger Fabric)
-
-Run the blockchain Docker Compose configuration:
-
-```bash
-docker compose -f blockchain/docker-compose.yaml up -d
-```
-
-This starts:
-
-* Peer nodes
-* Orderer nodes
-* Chaincode v1.2
-
----
-
-## 5. Initialize the Ledger
-
-Before using the system, initialize the blockchain ledger to register the demo issuer account:
-
-```bash
-curl -X POST http://localhost:3000/api/ledger/init
-```
+- Backend API: `http://localhost:3000`
+- IPFS Gateway: `http://localhost:8081` (or `http://localhost:8080`)
+- PostgreSQL: `localhost:5433` (internal container port `5432`)
 
 ---
 
 # 🛰️ Frontend Integration Guide (API Documentation)
 
-> The smart contract and backend use **`ipfsCid`** as the single content identifier. Frontend developers only need to work with **`ipfsCid`** when handling file identity and proof-of-authenticity operations.
+> The backend uses **`ipfsCid`** as the document content identifier. Backend metadata now follows the final certificate business model and is stored in PostgreSQL.
 
 ---
 
-# 1. Issue / Upload a New Certificate
+# 1. Upload a New Certificate
 
 ### Endpoint
 
@@ -106,7 +78,7 @@ curl -X POST http://localhost:3000/api/ledger/init
 POST /api/upload
 ```
 
-Used by university administrators to register a new certificate and upload its original PDF file.
+Used by administrators to register a new certificate and upload its original PDF file.
 
 ### Content-Type
 
@@ -116,18 +88,27 @@ multipart/form-data
 
 ### Form Data Fields
 
-| Field             | Type | Description                                     |
-| ----------------- | ---- | ----------------------------------------------- |
-| file_ijazah       | File | Original certificate PDF                        |
-| certificateNumber | Text | Unique certificate number                       |
-| studentId         | Text | Student identification number                   |
-| issuerId          | Text | Issuing institution ID (default: `DEMO_ISSUER`) |
-| organizationName  | Text | University name                                 |
-| departmentName    | Text | Faculty or department                           |
-| mspId             | Text | Blockchain MSP ID (default: `Org1MSP`)          |
-| certificateType   | Text | Certificate category (e.g., `DIPLOMA`)          |
-| title             | Text | Degree title                                    |
-| issuedAt          | Text | Issue date (`YYYY-MM-DD`)                       |
+| Field                          | Type | Description |
+| ------------------------------ | ---- | ----------- |
+| file_ijazah                    | File | Original certificate PDF |
+| certificateId                  | Text | Optional backend certificate identifier |
+| certificateNumber              | Text | Official certificate number |
+| studentName                    | Text | Student full name |
+| studentId                      | Text | Student identification number |
+| graduationDate                 | Text | Graduation date (`YYYY-MM-DD`) |
+| studyProgram                   | Text | Study program |
+| faculty                        | Text | Faculty |
+| degreeLevel                    | Text | Degree level, e.g. `S1` |
+| degreeName                     | Text | Degree name |
+| degreeAbbreviation             | Text | Degree abbreviation |
+| universityName                 | Text | University name |
+| universityAccreditationNumber  | Text | University accreditation number |
+| programAccreditationAgency     | Text | Program accreditation agency |
+| programAccreditationNumber     | Text | Program accreditation number |
+| issueDate                      | Text | Issue date (`YYYY-MM-DD`) |
+| deanName                       | Text | Dean name |
+| rectorName                     | Text | Rector name |
+| issuer                         | Text | Issuer display name |
 
 ### Example Success Response
 
@@ -136,7 +117,31 @@ multipart/form-data
   "success": true,
   "message": "Certificate uploaded successfully",
   "data": {
-    "...": "..."
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "certificateId": "CERT-2026-000001",
+    "certificateNumber": "0****************",
+    "studentName": "M*** ***** *******",
+    "studentId": "2********",
+    "graduationDate": "2***-**-**",
+    "studyProgram": "Program Sarjana **************",
+    "faculty": "Fakultas **************",
+    "degreeLevel": "S*",
+    "degreeName": "Sarjana ************",
+    "degreeAbbreviation": "S.***",
+    "universityName": "U**************",
+    "universityAccreditationNumber": "**************",
+    "programAccreditationAgency": "BAN-PT",
+    "programAccreditationNumber": "******************",
+    "issueDate": "2***-**-**",
+    "deanName": "Prof. S**************.",
+    "rectorName": "Prof. Dr. S**********.",
+    "fileName": "0010084122122026100006.pdf",
+    "ipfsCid": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx",
+    "ledgerTxId": null,
+    "issuer": "U**************",
+    "status": "VALID",
+    "createdAt": "2026-06-30T10:15:23.000Z",
+    "updatedAt": "2026-06-30T10:15:23.000Z"
   }
 }
 ```
@@ -148,7 +153,7 @@ multipart/form-data
 ### Endpoint
 
 ```http
-GET /api/verify/:certificateNumber
+GET /api/verify/:nomorIjazah
 ```
 
 This is the primary public verification endpoint.
@@ -156,14 +161,8 @@ This is the primary public verification endpoint.
 The backend will:
 
 1. Search certificate metadata in PostgreSQL.
-2. Validate certificate status against the blockchain ledger in real time.
-3. Generate an accessible IPFS document URL.
-
-### Example Request
-
-```http
-GET /api/verify/CERT-2026-TI-0002
-```
+2. Attempt legacy blockchain verification using the stored `certificateId` and `ipfsCid`.
+3. Return the final backend metadata plus an accessible IPFS document URL when verification succeeds.
 
 ### Example Success Response
 
@@ -178,14 +177,6 @@ GET /api/verify/CERT-2026-TI-0002
 }
 ```
 
-### Frontend Implementation Note
-
-If `valid` is `true`, the certificate PDF can be rendered directly using `documentUrl` with:
-
-* `<iframe>`
-* PDF Viewer
-* Embedded PDF component
-
 ---
 
 # 3. Manual PDF Verification
@@ -196,47 +187,13 @@ If `valid` is `true`, the certificate PDF can be rendered directly using `docume
 POST /api/certificates/:certificateId/verify
 ```
 
-Used when the frontend calculates the document CID locally (client-side hashing) and sends it directly to the blockchain for authenticity verification.
+Used when the frontend already has an IPFS CID and wants to send it directly to the existing Fabric verification placeholder.
 
 ### Request Body
 
 ```json
 {
-  "ipfsCid": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
-}
-```
-
-Replace the value with the CID generated from the uploaded PDF.
-
-### Valid Document Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "certificateId": "2d5a3d1e-3221-44f7-8f3b-e13a0393d625",
-    "valid": true,
-    "status": "ACTIVE",
-    "message": "certificate is valid",
-    "revoked": false,
-    "tampered": false
-  }
-}
-```
-
-### Tampered Document Response
-
-```json
-{
-  "success": true,
-  "data": {
-    "certificateId": "2d5a3d1e-3221-44f7-8f3b-e13a0393d625",
-    "valid": false,
-    "status": "ACTIVE",
-    "message": "document hash does not match certificate record",
-    "revoked": false,
-    "tampered": true
-  }
+  "ipfsCid": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx"
 }
 ```
 
@@ -257,22 +214,20 @@ The following npm scripts are available in the project root:
 
 # 📌 Technology Stack
 
-* **Backend:** Express.js + TypeScript
-* **Blockchain:** Hyperledger Fabric
-* **Storage:** IPFS
-* **Database:** PostgreSQL
-* **Containerization:** Docker & Docker Compose
+- **Backend:** Express.js + TypeScript
+- **Blockchain:** Hyperledger Fabric (placeholder integration in this stage)
+- **Storage:** IPFS
+- **Database:** PostgreSQL
+- **Containerization:** Docker & Docker Compose
 
 ---
 
 ## Key Features
 
-* Secure certificate issuance and verification
-* Tamper-proof certificate records using blockchain
-* Decentralized document storage via IPFS
-* Real-time blockchain validation
-* Fast metadata lookup through PostgreSQL
-* Manual document authenticity verification using IPFS CID
-* Dockerized deployment environment
-
-This architecture combines the strengths of decentralized storage, blockchain immutability, and traditional database performance. A surprisingly rare case of technologies cooperating instead of starting a turf war over whose responsibility the data is.
+- Final backend certificate metadata model
+- PDF upload to IPFS
+- PostgreSQL persistence as current backend source of truth
+- Public verification by certificate number
+- Optional ledger verification placeholder
+- Fast metadata lookup through PostgreSQL
+- Dockerized deployment environment

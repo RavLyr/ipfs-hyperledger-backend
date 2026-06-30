@@ -3,16 +3,18 @@ import type { Request, Response } from 'express';
 import {
   parseCertificateIdParams,
   parseIssueCertificateBody,
-  parseIssuerIdParams,
+  parseIssuerParams,
   parseRegisterIssuerBody,
   parseReissueCertificateBody,
   parseRevokeCertificateBody,
-  parseVerifyCertificateBody,
+  parseVerifyCertificateBody
 } from './certificate.dto';
-import { certificateService,
-    getAllCertificatesService,
-    uploadCertificate,
-    verifyCertificateService   , } from './certificate.service';
+import {
+  certificateService,
+  getAllCertificatesService,
+  uploadCertificate,
+  verifyCertificateService
+} from './certificate.service';
 import { getIPFSGatewayUrl } from '../../infrastructure/ipfs/ipfs.service';
 
 export async function initLedger(_req: Request, res: Response): Promise<void> {
@@ -29,15 +31,15 @@ export async function registerIssuer(req: Request, res: Response): Promise<void>
 }
 
 export async function getIssuer(req: Request, res: Response): Promise<void> {
-  const issuerId = parseIssuerIdParams(req.params);
-  const result = await certificateService.getIssuer(issuerId);
+  const issuer = parseIssuerParams(req.params);
+  const result = await certificateService.getIssuer(issuer);
 
   res.json({ success: true, data: result });
 }
 
 export async function issuerExists(req: Request, res: Response): Promise<void> {
-  const issuerId = parseIssuerIdParams(req.params);
-  const result = await certificateService.issuerExists(issuerId);
+  const issuer = parseIssuerParams(req.params);
+  const result = await certificateService.issuerExists(issuer);
 
   res.json({ success: true, data: result });
 }
@@ -114,40 +116,33 @@ export async function getCertificateHistory(req: Request, res: Response): Promis
 }
 
 export async function getAllCertificates(req: Request, res: Response): Promise<void> {
-  const issuerId = typeof req.query.issuerId === 'string' ? req.query.issuerId.trim() : undefined;
-  const result = issuerId
-    ? await certificateService.getCertificatesByIssuer(issuerId)
+  const issuer = typeof req.query.issuer === 'string' ? req.query.issuer.trim() : undefined;
+  const result = issuer
+    ? await certificateService.getCertificatesByIssuer(issuer)
     : await certificateService.getAllCertificates();
 
   res.json({ success: true, data: result });
 }
 
 export async function getCertificatesByIssuer(req: Request, res: Response): Promise<void> {
-  const issuerId = parseIssuerIdParams(req.params);
-  const result = await certificateService.getCertificatesByIssuer(issuerId);
+  const issuer = parseIssuerParams(req.params);
+  const result = await certificateService.getCertificatesByIssuer(issuer);
 
   res.json({ success: true, data: result });
 }
-
-
 
 export async function uploadCertificateController(
   req: Request,
   res: Response
 ): Promise<void> {
   const certificate = await uploadCertificate(req.body, req.file);
-  const { documentHash, ...cleanData } = certificate;
 
   res.status(201).json({
     success: true,
-    message: "Certificate uploaded successfully",
-    data: cleanData,
+    message: 'Certificate uploaded successfully',
+    data: certificate
   });
 }
-
-type VerifyCertificateParams = {
-  nomorIjazah: string;
-};
 
 export async function verifyCertificateController(
   req: Request,
@@ -161,37 +156,42 @@ export async function verifyCertificateController(
       success: true,
       valid: false,
       message: 'Certificate not found in database',
-      data: null,
+      data: null
     });
     return;
   }
 
   try {
-    // 3. Verify on Ledger using certificateId and ipfsCid retrieved from DB
     const ledgerResult = await certificateService.verifyCertificate({
       certificateId: certificate.certificateId,
-      ipfsCid: certificate.ipfsCid, // Using stored ipfsCid to verify
-    }) as any;
+      ipfsCid: certificate.ipfsCid
+    });
 
-    const valid = ledgerResult && ledgerResult.valid === true;
-    const { documentHash, ...cleanDbData } = certificate;
+    const valid = Boolean(
+      ledgerResult && typeof ledgerResult === 'object' && 'valid' in ledgerResult && (ledgerResult as { valid?: unknown }).valid === true
+    );
 
-    // 4. Respond with ledger status, DB metadata, and IPFS document URL if valid
     res.json({
       success: true,
       valid,
-      message: ledgerResult ? ledgerResult.message : 'Ledger verification failed',
+      message:
+        ledgerResult && typeof ledgerResult === 'object' && 'message' in ledgerResult && typeof (ledgerResult as { message?: unknown }).message === 'string'
+          ? (ledgerResult as { message: string }).message
+          : 'Ledger verification failed',
       ledgerData: ledgerResult,
-      dbData: cleanDbData,
-      documentUrl: valid ? getIPFSGatewayUrl(certificate.ipfsCid) : null,
+      dbData: certificate,
+      documentUrl: valid ? getIPFSGatewayUrl(certificate.ipfsCid) : null
     });
   } catch (err: unknown) {
     const errorMessage = err instanceof Error ? err.message : 'Verification failed';
-    res.status(502).json({
-      success: false,
-      valid: false,
-      message: `Ledger verification error: ${errorMessage}`,
-      data: null,
+
+    res.json({
+      success: true,
+      valid: certificate.status === 'VALID',
+      message: `Ledger verification unavailable: ${errorMessage}`,
+      ledgerData: null,
+      dbData: certificate,
+      documentUrl: getIPFSGatewayUrl(certificate.ipfsCid)
     });
   }
 }
@@ -200,11 +200,11 @@ export async function getAllCertificatesController(
   req: Request,
   res: Response
 ): Promise<void> {
-  const issuerId = typeof req.query.issuerId === 'string' ? req.query.issuerId.trim() : undefined;
-  const certificates = await getAllCertificatesService(issuerId);
+  const issuer = typeof req.query.issuer === 'string' ? req.query.issuer.trim() : undefined;
+  const certificates = await getAllCertificatesService(issuer);
 
   res.json({
     success: true,
-    data: certificates,
+    data: certificates
   });
 }

@@ -20,60 +20,57 @@ function mapCertificate(row: PrismaCertificate): Certificate {
     id: row.id,
     certificateId: row.certificateId,
     certificateNumber: row.certificateNumber,
-    issuerId: row.issuerId,
-    certificateType: row.certificateType,
-    title: row.title,
-    studentIdHash: row.studentIdHash,
-    documentHash: row.documentHash,
+    studentName: row.studentName,
+    studentId: row.studentId,
+    graduationDate: formatDateOnly(row.graduationDate),
+    studyProgram: row.studyProgram,
+    faculty: row.faculty,
+    degreeLevel: row.degreeLevel,
+    degreeName: row.degreeName,
+    degreeAbbreviation: row.degreeAbbreviation,
+    universityName: row.universityName,
+    universityAccreditationNumber: row.universityAccreditationNumber,
+    programAccreditationAgency: row.programAccreditationAgency,
+    programAccreditationNumber: row.programAccreditationNumber,
+    issueDate: formatDateOnly(row.issueDate),
+    deanName: row.deanName,
+    rectorName: row.rectorName,
+    fileName: row.fileName,
     ipfsCid: row.ipfsCid,
-    file_name: row.fileName,
-    mime_type: row.mimeType,
-    file_size: row.fileSize === null ? null : Number(row.fileSize),
-    ledger_tx_id: row.ledgerTxId,
+    ledgerTxId: row.ledgerTxId,
+    issuer: row.issuer,
     status: row.status,
-    issuedAt: formatDateTime(row.issuedAt),
-    expiredAt: row.expiredAt ? formatDateTime(row.expiredAt) : null,
-    previousCertificateId: row.previousCertificateId,
-    replacementCertificateId: row.replacementCertificateId,
-    created_at: formatDateTime(row.createdAt),
-    updated_at: formatDateTime(row.updatedAt),
+    createdAt: formatDateTime(row.createdAt),
+    updatedAt: formatDateTime(row.updatedAt)
   };
 }
 
-export async function insertCertificate(
-  data: CreateCertificateInput
-): Promise<Certificate> {
-  const issuer = await prisma.issuer.upsert({
-    where: { issuerId: data.issuerId },
-    update: {},
-    create: {
-      issuerId: data.issuerId,
-      organizationName: data.organizationName,
-      departmentName: data.departmentName,
-      mspId: data.mspId,
-    },
-  });
-
+export async function insertCertificate(data: CreateCertificateInput): Promise<Certificate> {
   const certificate = await prisma.certificate.create({
     data: {
       certificateId: data.certificateId,
       certificateNumber: data.certificateNumber,
-      issuerId: issuer.issuerId,
-      certificateType: data.certificateType,
-      title: data.title,
-      studentIdHash: data.studentIdHash,
-      documentHash: data.documentHash,
+      studentName: data.studentName,
+      studentId: data.studentId,
+      graduationDate: toDate(data.graduationDate),
+      studyProgram: data.studyProgram,
+      faculty: data.faculty,
+      degreeLevel: data.degreeLevel,
+      degreeName: data.degreeName,
+      degreeAbbreviation: data.degreeAbbreviation,
+      universityName: data.universityName,
+      universityAccreditationNumber: data.universityAccreditationNumber,
+      programAccreditationAgency: data.programAccreditationAgency,
+      programAccreditationNumber: data.programAccreditationNumber,
+      issueDate: toDate(data.issueDate),
+      deanName: data.deanName,
+      rectorName: data.rectorName,
+      fileName: data.fileName,
       ipfsCid: data.ipfsCid,
-      fileName: data.file_name,
-      mimeType: data.mime_type,
-      fileSize: data.file_size,
-      ledgerTxId: data.ledger_tx_id,
-      status: data.status,
-      issuedAt: toDate(data.issuedAt),
-      expiredAt: data.expiredAt ? new Date(data.expiredAt) : null,
-      previousCertificateId: data.previousCertificateId ?? null,
-      replacementCertificateId: data.replacementCertificateId ?? null,
-    },
+      ledgerTxId: data.ledgerTxId,
+      issuer: data.issuer,
+      status: data.status
+    }
   });
 
   return mapCertificate(certificate);
@@ -83,17 +80,17 @@ export async function findCertificateByCertificateNumber(
   certificateNumber: string
 ): Promise<Certificate | null> {
   const certificate = await prisma.certificate.findUnique({
-    where: { certificateNumber },
+    where: { certificateNumber }
   });
 
   return certificate ? mapCertificate(certificate) : null;
 }
 
-export async function findAllCertificates(issuerId?: string): Promise<Certificate[]> {
-  const where = issuerId ? { issuerId } : {};
+export async function findAllCertificates(issuer?: string): Promise<Certificate[]> {
+  const where = issuer ? { issuer } : {};
   const certificates = await prisma.certificate.findMany({
     where,
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: 'desc' }
   });
 
   return certificates.map(mapCertificate);

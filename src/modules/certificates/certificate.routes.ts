@@ -1,10 +1,10 @@
 import { Router } from 'express';
-import { upload } from "../../middleware/upload.middleware";
+import { upload } from '../../middleware/upload.middleware';
 import {
   getAllCertificatesController,
   uploadCertificateController,
-  verifyCertificateController,
-} from "./certificate.controller";
+  verifyCertificateController
+} from './certificate.controller';
 import { asyncHandler } from '../../utils/asyncHandler';
 import * as certificateController from './certificate.controller';
 
@@ -13,10 +13,10 @@ export const certificateRoutes = Router();
 certificateRoutes.post('/ledger/init', asyncHandler(certificateController.initLedger));
 
 certificateRoutes.post('/issuers', asyncHandler(certificateController.registerIssuer));
-certificateRoutes.get('/issuers/:issuerId', asyncHandler(certificateController.getIssuer));
-certificateRoutes.get('/issuers/:issuerId/exists', asyncHandler(certificateController.issuerExists));
+certificateRoutes.get('/issuers/:issuer', asyncHandler(certificateController.getIssuer));
+certificateRoutes.get('/issuers/:issuer/exists', asyncHandler(certificateController.issuerExists));
 certificateRoutes.get(
-  '/issuers/:issuerId/certificates',
+  '/issuers/:issuer/certificates',
   asyncHandler(certificateController.getCertificatesByIssuer)
 );
 
@@ -37,14 +37,14 @@ certificateRoutes.post('/certificates/:certificateId/reissue', asyncHandler(cert
 certificateRoutes.get('/certificates/:certificateId/history', asyncHandler(certificateController.getCertificateHistory));
 
 certificateRoutes.post(
-  "/upload",
-  upload.single("file_ijazah"),
+  '/upload',
+  upload.single('file_ijazah'),
   asyncHandler(uploadCertificateController)
 );
 
 certificateRoutes.get(
-  "/verify/:nomorIjazah",
+  '/verify/:nomorIjazah',
   asyncHandler(verifyCertificateController)
 );
 
-certificateRoutes.get("/", asyncHandler(getAllCertificatesController));
+certificateRoutes.get('/', asyncHandler(getAllCertificatesController));

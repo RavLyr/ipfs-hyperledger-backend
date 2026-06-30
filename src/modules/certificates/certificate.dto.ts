@@ -1,26 +1,36 @@
 import { randomUUID } from 'node:crypto';
 
 import { AppError } from '../../errors/AppError';
-import { sha256Hex } from '../../utils/hash';
 
 export type RegisterIssuerInput = {
-  readonly issuerId: string;
-  readonly organizationName: string;
-  readonly departmentName: string;
-  readonly mspId: string;
+  readonly issuer: string;
+  readonly universityName: string;
+  readonly faculty: string;
 };
 
 export type IssueCertificateInput = {
   readonly certificateId: string;
   readonly certificateNumber: string;
-  readonly studentIdHash: string;
-  readonly issuerId: string;
-  readonly certificateType: string;
-  readonly title: string;
+  readonly studentName: string;
+  readonly studentId: string;
+  readonly graduationDate: string;
+  readonly studyProgram: string;
+  readonly faculty: string;
+  readonly degreeLevel: string;
+  readonly degreeName: string;
+  readonly degreeAbbreviation: string;
+  readonly universityName: string;
+  readonly universityAccreditationNumber: string;
+  readonly programAccreditationAgency: string;
+  readonly programAccreditationNumber: string;
+  readonly issueDate: string;
+  readonly deanName: string;
+  readonly rectorName: string;
+  readonly issuer: string;
   readonly ipfsCid: string;
-  readonly issuedAt: string;
-  readonly expiredAt: string;
 };
+
+export type UploadCertificateInput = Omit<IssueCertificateInput, 'ipfsCid'>;
 
 export type VerifyCertificateInput = {
   readonly certificateId: string;
@@ -62,28 +72,24 @@ function readRequiredString(source: Record<string, unknown>, field: string): str
   return value;
 }
 
-function readHashedValue(source: Record<string, unknown>, hashField: string, rawField: string): string | undefined {
-  const hash = readNonEmptyString(source, hashField);
-
-  if (hash) {
-    return hash;
+function isValidDateOnly(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
   }
 
-  const rawValue = readNonEmptyString(source, rawField);
+  const date = new Date(`${value}T00:00:00.000Z`);
 
-  return rawValue ? sha256Hex(rawValue) : undefined;
+  return !Number.isNaN(date.getTime());
 }
 
-function readDocumentHash(source: Record<string, unknown>, hashField: string, base64Field: string): string | undefined {
-  const hash = readNonEmptyString(source, hashField);
+function readRequiredDate(source: Record<string, unknown>, field: string): string {
+  const value = readRequiredString(source, field);
 
-  if (hash) {
-    return hash;
+  if (!isValidDateOnly(value)) {
+    throw validationError({ body: { [field]: 'Expected YYYY-MM-DD format' } });
   }
 
-  const documentBase64 = readNonEmptyString(source, base64Field);
-
-  return documentBase64 ? sha256Hex(Buffer.from(documentBase64, 'base64')) : undefined;
+  return value;
 }
 
 function validationError(details: unknown): AppError {
@@ -104,8 +110,8 @@ function parseIdParam(params: unknown, field: string): string {
   return value;
 }
 
-export function parseIssuerIdParams(params: unknown): string {
-  return parseIdParam(params, 'issuerId');
+export function parseIssuerParams(params: unknown): string {
+  return parseIdParam(params, 'issuer');
 }
 
 export function parseCertificateIdParams(params: unknown): string {
@@ -118,10 +124,9 @@ export function parseRegisterIssuerBody(body: unknown): RegisterIssuerInput {
   }
 
   return {
-    issuerId: readRequiredString(body, 'issuerId'),
-    organizationName: readRequiredString(body, 'organizationName'),
-    departmentName: readRequiredString(body, 'departmentName'),
-    mspId: readRequiredString(body, 'mspId')
+    issuer: readRequiredString(body, 'issuer'),
+    universityName: readRequiredString(body, 'universityName'),
+    faculty: readRequiredString(body, 'faculty')
   };
 }
 
@@ -130,33 +135,64 @@ export function parseIssueCertificateBody(body: unknown): IssueCertificateInput 
     throw validationError({ body: 'Expected object' });
   }
 
-  const studentIdHash = readHashedValue(body, 'studentIdHash', 'studentId');
+  return {
+    certificateId: readNonEmptyString(body, 'certificateId') ?? randomUUID(),
+    certificateNumber: readRequiredString(body, 'certificateNumber'),
+    studentName: readRequiredString(body, 'studentName'),
+    studentId: readRequiredString(body, 'studentId'),
+    graduationDate: readRequiredDate(body, 'graduationDate'),
+    studyProgram: readRequiredString(body, 'studyProgram'),
+    faculty: readRequiredString(body, 'faculty'),
+    degreeLevel: readRequiredString(body, 'degreeLevel'),
+    degreeName: readRequiredString(body, 'degreeName'),
+    degreeAbbreviation: readRequiredString(body, 'degreeAbbreviation'),
+    universityName: readRequiredString(body, 'universityName'),
+    universityAccreditationNumber: readRequiredString(body, 'universityAccreditationNumber'),
+    programAccreditationAgency: readRequiredString(body, 'programAccreditationAgency'),
+    programAccreditationNumber: readRequiredString(body, 'programAccreditationNumber'),
+    issueDate: readRequiredDate(body, 'issueDate'),
+    deanName: readRequiredString(body, 'deanName'),
+    rectorName: readRequiredString(body, 'rectorName'),
+    issuer: readRequiredString(body, 'issuer'),
+    ipfsCid: readRequiredString(body, 'ipfsCid')
+  };
+}
 
-  if (!studentIdHash) {
-    throw validationError({
-      body: {
-        studentIdHash: 'Required non-empty string, or provide studentId so backend can hash it',
-      }
-    });
+export function parseUploadCertificateBody(body: unknown): UploadCertificateInput {
+  if (!isRecord(body)) {
+    throw validationError({ body: 'Expected object' });
   }
 
   return {
     certificateId: readNonEmptyString(body, 'certificateId') ?? randomUUID(),
     certificateNumber: readRequiredString(body, 'certificateNumber'),
-    studentIdHash,
-    issuerId: readRequiredString(body, 'issuerId'),
-    certificateType: readRequiredString(body, 'certificateType'),
-    title: readRequiredString(body, 'title'),
-    ipfsCid: readRequiredString(body, 'ipfsCid'),
-    issuedAt: readRequiredString(body, 'issuedAt'),
-    expiredAt: readNonEmptyString(body, 'expiredAt') ?? ''
+    studentName: readRequiredString(body, 'studentName'),
+    studentId: readRequiredString(body, 'studentId'),
+    graduationDate: readRequiredDate(body, 'graduationDate'),
+    studyProgram: readRequiredString(body, 'studyProgram'),
+    faculty: readRequiredString(body, 'faculty'),
+    degreeLevel: readRequiredString(body, 'degreeLevel'),
+    degreeName: readRequiredString(body, 'degreeName'),
+    degreeAbbreviation: readRequiredString(body, 'degreeAbbreviation'),
+    universityName: readRequiredString(body, 'universityName'),
+    universityAccreditationNumber: readRequiredString(body, 'universityAccreditationNumber'),
+    programAccreditationAgency: readRequiredString(body, 'programAccreditationAgency'),
+    programAccreditationNumber: readRequiredString(body, 'programAccreditationNumber'),
+    issueDate: readRequiredDate(body, 'issueDate'),
+    deanName: readRequiredString(body, 'deanName'),
+    rectorName: readRequiredString(body, 'rectorName'),
+    issuer: readRequiredString(body, 'issuer')
   };
 }
 
 export function parseVerifyCertificateBody(params: unknown, body: unknown): VerifyCertificateInput {
   const certificateId = parseCertificateIdParams(params);
-  const source = isRecord(body) ? body : {};
-  const ipfsCid = readNonEmptyString(source, 'ipfsCid') ?? readDocumentHash(source, 'documentHash', 'documentBase64') ?? '';
+
+  if (!isRecord(body)) {
+    throw validationError({ body: 'Expected object' });
+  }
+
+  const ipfsCid = readRequiredString(body, 'ipfsCid');
 
   return { certificateId, ipfsCid };
 }
@@ -168,15 +204,7 @@ export function parseRevokeCertificateBody(params: unknown, body: unknown): Revo
     throw validationError({ body: 'Expected object' });
   }
 
-  const reasonHash = readHashedValue(body, 'reasonHash', 'reason');
-
-  if (!reasonHash) {
-    throw validationError({
-      body: {
-        reasonHash: 'Required non-empty string, or provide reason so backend can hash it'
-      }
-    });
-  }
+  const reasonHash = readRequiredString(body, 'reasonHash');
 
   return {
     certificateId,
@@ -192,15 +220,7 @@ export function parseReissueCertificateBody(params: unknown, body: unknown): Rei
     throw validationError({ body: 'Expected object' });
   }
 
-  const reasonHash = readHashedValue(body, 'reasonHash', 'reason');
-
-  if (!reasonHash) {
-    throw validationError({
-      body: {
-        reasonHash: 'Required non-empty string, or provide reason so backend can hash it'
-      }
-    });
-  }
+  const reasonHash = readRequiredString(body, 'reasonHash');
 
   return {
     oldCertificateId,
@@ -211,53 +231,40 @@ export function parseReissueCertificateBody(params: unknown, body: unknown): Rei
     reissuedAt: readNonEmptyString(body, 'reissuedAt') ?? new Date().toISOString()
   };
 }
-export type CertificateStatus = "VALID" | "REVOKED";
+
+export type CertificateStatus = 'VALID' | 'REVOKED';
 
 export interface Certificate {
-  id: number;
+  id: string;
   certificateId: string;
   certificateNumber: string;
-  issuerId: string;
-  certificateType: string;
-  title: string;
-  studentIdHash: string;
-  documentHash: string;
+  studentName: string;
+  studentId: string;
+  graduationDate: string;
+  studyProgram: string;
+  faculty: string;
+  degreeLevel: string;
+  degreeName: string;
+  degreeAbbreviation: string;
+  universityName: string;
+  universityAccreditationNumber: string;
+  programAccreditationAgency: string;
+  programAccreditationNumber: string;
+  issueDate: string;
+  deanName: string;
+  rectorName: string;
+  fileName: string;
   ipfsCid: string;
-  file_name: string | null;
-  mime_type: string | null;
-  file_size: number | null;
-  ledger_tx_id: string;
+  ledgerTxId: string | null;
+  issuer: string;
   status: CertificateStatus;
-  issuedAt: string;
-  expiredAt: string | null;
-  previousCertificateId: string | null;
-  replacementCertificateId: string | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface CertificateTextInput {
-  certificateId: string;
-  certificateNumber: string;
-  issuerId: string;
-  organizationName: string;
-  departmentName: string;
-  mspId: string;
-  certificateType: string;
-  title: string;
-  studentIdHash: string;
-  documentHash: string;
-  issuedAt: string;
-  expiredAt: string;
-  previousCertificateId?: string;
-  replacementCertificateId?: string;
-}
-
-export interface CreateCertificateInput extends CertificateTextInput {
+export interface CreateCertificateInput extends UploadCertificateInput {
+  fileName: string;
   ipfsCid: string;
-  file_name: string;
-  mime_type: string;
-  file_size: number;
-  ledger_tx_id: string;
+  ledgerTxId: string | null;
   status: CertificateStatus;
 }

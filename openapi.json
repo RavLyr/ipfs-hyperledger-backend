@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "IPFS Hyperledger Fabric Verification Backend API",
-    "description": "API dokumentasi untuk sistem verifikasi ijazah terdesentralisasi menggunakan Hyperledger Fabric (blockchain) dan IPFS (decentralized storage) dengan database lokal PostgreSQL.",
+    "description": "API dokumentasi backend verifikasi ijazah dengan metadata backend final di PostgreSQL, integrasi IPFS, dan placeholder integrasi Hyperledger Fabric.",
     "version": "1.0.0"
   },
   "servers": [
@@ -38,7 +38,7 @@
     "/api/ledger/init": {
       "post": {
         "summary": "Inisialisasi Ledger",
-        "description": "Mempersiapkan state awal ledger blockchain dan mendaftarkan DEMO_ISSUER bawaan.",
+        "description": "Mempersiapkan state awal ledger blockchain placeholder tanpa mengubah kontrak Fabric.",
         "responses": {
           "200": {
             "description": "Ledger initialized successfully",
@@ -59,8 +59,8 @@
     },
     "/api/issuers": {
       "post": {
-        "summary": "Pendaftaran Issuer (Penerbit)",
-        "description": "Mendaftarkan institusi penerbit ijazah baru ke dalam blockchain ledger.",
+        "summary": "Register Issuer Placeholder",
+        "description": "Mendaftarkan issuer ke integrasi Fabric placeholder menggunakan metadata backend baru.",
         "requestBody": {
           "required": true,
           "content": {
@@ -80,7 +80,7 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "data": { "type": "string", "example": "" }
+                    "data": {}
                   }
                 }
               }
@@ -89,17 +89,16 @@
         }
       }
     },
-    "/api/issuers/{issuerId}": {
+    "/api/issuers/{issuer}": {
       "get": {
-        "summary": "Detail Issuer",
-        "description": "Mendapatkan data institusi issuer dari blockchain berdasarkan ID.",
+        "summary": "Detail Issuer Placeholder",
         "parameters": [
           {
-            "name": "issuerId",
+            "name": "issuer",
             "in": "path",
             "required": true,
             "schema": { "type": "string" },
-            "example": "DEMO_ISSUER"
+            "example": "Universitas Diponegoro"
           }
         ],
         "responses": {
@@ -111,16 +110,7 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-                        "organizationName": { "type": "string", "example": "Demo University" },
-                        "departmentName": { "type": "string", "example": "Academic Office" },
-                        "mspId": { "type": "string", "example": "Org1MSP" },
-                        "status": { "type": "string", "example": "ACTIVE" }
-                      }
-                    }
+                    "data": {}
                   }
                 }
               }
@@ -129,13 +119,12 @@
         }
       }
     },
-    "/api/issuers/{issuerId}/exists": {
+    "/api/issuers/{issuer}/exists": {
       "get": {
-        "summary": "Cek Keberadaan Issuer",
-        "description": "Memeriksa apakah issuer terdaftar aktif di blockchain ledger.",
+        "summary": "Cek Keberadaan Issuer Placeholder",
         "parameters": [
           {
-            "name": "issuerId",
+            "name": "issuer",
             "in": "path",
             "required": true,
             "schema": { "type": "string" }
@@ -159,13 +148,12 @@
         }
       }
     },
-    "/api/issuers/{issuerId}/certificates": {
+    "/api/issuers/{issuer}/certificates": {
       "get": {
-        "summary": "Daftar Sertifikat Berdasarkan Issuer",
-        "description": "Mengambil semua daftar sertifikat yang diterbitkan oleh issuer tertentu langsung dari blockchain.",
+        "summary": "Daftar Sertifikat Ledger Berdasarkan Issuer",
         "parameters": [
           {
-            "name": "issuerId",
+            "name": "issuer",
             "in": "path",
             "required": true,
             "schema": { "type": "string" }
@@ -196,8 +184,8 @@
     },
     "/api/certificates": {
       "post": {
-        "summary": "Penerbitan Sertifikat (Ledger Direct)",
-        "description": "Mendaftarkan sertifikat baru secara langsung ke blockchain ledger (tanpa mengunggah file fisik).",
+        "summary": "Penerbitan Sertifikat Placeholder ke Ledger",
+        "description": "Mengirim metadata baru ke adapter placeholder Fabric tanpa mengubah service Fabric yang ada.",
         "requestBody": {
           "required": true,
           "content": {
@@ -217,7 +205,14 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "data": { "type": "string", "example": "" }
+                    "message": { "type": "string", "example": "Certificate issued successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "certificateId": { "type": "string", "example": "CERT-2026-000001" },
+                        "fabricResult": {}
+                      }
+                    }
                   }
                 }
               }
@@ -227,15 +222,14 @@
       },
       "get": {
         "summary": "Daftar Semua Sertifikat (Ledger)",
-        "description": "Mengambil rekaman sertifikat dari world state blockchain. Jika parameter issuerId ditentukan, ia akan menyaring sertifikat untuk penerbit tersebut saja.",
+        "description": "Mengambil rekaman sertifikat dari ledger placeholder. Jika parameter issuer ditentukan, hasil disaring pada integrasi Fabric.",
         "parameters": [
           {
-            "name": "issuerId",
+            "name": "issuer",
             "in": "query",
             "required": false,
-            "description": "ID issuer untuk menyaring sertifikat.",
             "schema": { "type": "string" },
-            "example": "DEMO_ISSUER"
+            "example": "Universitas Diponegoro"
           }
         ],
         "responses": {
@@ -264,7 +258,6 @@
     "/api/certificates/{certificateId}": {
       "get": {
         "summary": "Detail Sertifikat (Ledger)",
-        "description": "Mendapatkan data aset sertifikat dari blockchain berdasarkan ID sertifikat.",
         "parameters": [
           {
             "name": "certificateId",
@@ -296,7 +289,6 @@
     "/api/certificates/{certificateId}/exists": {
       "get": {
         "summary": "Cek Keberadaan Sertifikat",
-        "description": "Memeriksa apakah sertifikat terdaftar di blockchain ledger.",
         "parameters": [
           {
             "name": "certificateId",
@@ -326,7 +318,6 @@
     "/api/certificates/{certificateId}/verify": {
       "post": {
         "summary": "Verifikasi Sertifikat (Ledger Direct)",
-        "description": "Memvalidasi status dan kecocokan sidik jari berkas sertifikat (IPFS CID) secara langsung ke blockchain ledger.",
         "parameters": [
           {
             "name": "certificateId",
@@ -345,7 +336,7 @@
                   "ipfsCid": {
                     "type": "string",
                     "description": "IPFS CID dari berkas sertifikat yang ingin dicocokkan.",
-                    "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
+                    "example": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx"
                   }
                 },
                 "required": ["ipfsCid"]
@@ -362,20 +353,7 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "certificateId": { "type": "string", "example": "UUID-123" },
-                        "valid": { "type": "boolean", "example": true },
-                        "status": { "type": "string", "example": "ACTIVE" },
-                        "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-                        "certificateType": { "type": "string", "example": "DIPLOMA" },
-                        "message": { "type": "string", "example": "certificate is valid" },
-                        "issuedAt": { "type": "string", "example": "2026-06-27" },
-                        "revoked": { "type": "boolean", "example": false },
-                        "tampered": { "type": "boolean", "example": false }
-                      }
-                    }
+                    "data": {}
                   }
                 }
               }
@@ -386,8 +364,7 @@
     },
     "/api/certificates/{certificateId}/revoke": {
       "post": {
-        "summary": "Pencabutan Sertifikat (Revocation)",
-        "description": "Membatalkan status aktif sertifikat di blockchain.",
+        "summary": "Pencabutan Sertifikat",
         "parameters": [
           {
             "name": "certificateId",
@@ -403,10 +380,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "reason": { "type": "string", "description": "Alasan penarikan dokumen", "example": "Salah ketik nilai IPK" },
-                  "reasonHash": { "type": "string", "description": "Hash SHA256 alasan penarikan (opsional jika alasan raw diberikan)", "example": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824" },
+                  "reasonHash": { "type": "string", "example": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824" },
                   "revokedAt": { "type": "string", "format": "date-time", "example": "2026-06-29T08:00:00Z" }
-                }
+                },
+                "required": ["reasonHash"]
               }
             }
           }
@@ -420,7 +397,7 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "data": { "type": "string", "example": "" }
+                    "data": {}
                   }
                 }
               }
@@ -432,7 +409,6 @@
     "/api/certificates/{certificateId}/revocation": {
       "get": {
         "summary": "Informasi Pencabutan",
-        "description": "Mendapatkan rekaman alasan pencabutan sertifikat jika statusnya REVOKED.",
         "parameters": [
           {
             "name": "certificateId",
@@ -450,14 +426,7 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "certificateId": { "type": "string", "example": "UUID-123" },
-                        "reasonHash": { "type": "string", "example": "2cf24dba..." },
-                        "revokedAt": { "type": "string", "example": "2026-06-29T08:00:00Z" }
-                      }
-                    }
+                    "data": {}
                   }
                 }
               }
@@ -468,14 +437,12 @@
     },
     "/api/certificates/{certificateId}/reissue": {
       "post": {
-        "summary": "Penerbitan Ulang Sertifikat (Reissue)",
-        "description": "Menerbitkan sertifikat baru untuk menggantikan sertifikat aktif yang lama. Sertifikat lama akan otomatis diubah statusnya menjadi REISSUED.",
+        "summary": "Penerbitan Ulang Sertifikat",
         "parameters": [
           {
             "name": "certificateId",
             "in": "path",
             "required": true,
-            "description": "ID sertifikat lama yang digantikan",
             "schema": { "type": "string" }
           }
         ],
@@ -486,14 +453,13 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "newCertificateId": { "type": "string", "description": "ID sertifikat baru (UUID opsional, digenerate jika kosong)", "example": "e5c6b0fd-a590-48a5-ab85-7cfa8e88e2c0" },
-                  "newCertificateNumber": { "type": "string", "description": "Nomor sertifikat baru", "example": "CERT-2026-TI-0001-REV1" },
-                  "newIpfsCid": { "type": "string", "description": "IPFS CID dokumen baru", "example": "bafkreigz..." },
-                  "reason": { "type": "string", "description": "Alasan penggantian", "example": "Koreksi salah ketik nama" },
-                  "reasonHash": { "type": "string", "description": "Hash SHA256 alasan (opsional)", "example": "f03a6bc..." },
+                  "newCertificateId": { "type": "string", "example": "CERT-2026-000002" },
+                  "newCertificateNumber": { "type": "string", "example": "0010084122122026100007" },
+                  "newIpfsCid": { "type": "string", "example": "QmX2wV6yyyyyyyyyyyyyyyyyyyyyyyy" },
+                  "reasonHash": { "type": "string", "example": "f03a6bc..." },
                   "reissuedAt": { "type": "string", "format": "date-time" }
                 },
-                "required": ["newCertificateNumber", "newIpfsCid"]
+                "required": ["newCertificateNumber", "newIpfsCid", "reasonHash"]
               }
             }
           }
@@ -511,9 +477,9 @@
                     "data": {
                       "type": "object",
                       "properties": {
-                        "oldCertificateId": { "type": "string", "example": "UUID-OLD" },
-                        "newCertificateId": { "type": "string", "example": "UUID-NEW" },
-                        "fabricResult": { "type": "string", "example": "" }
+                        "oldCertificateId": { "type": "string", "example": "CERT-2026-000001" },
+                        "newCertificateId": { "type": "string", "example": "CERT-2026-000002" },
+                        "fabricResult": {}
                       }
                     }
                   }
@@ -527,7 +493,6 @@
     "/api/certificates/{certificateId}/history": {
       "get": {
         "summary": "Riwayat Perubahan Audit",
-        "description": "Mendapatkan seluruh history transaksi dan perubahan status sertifikat dari blockchain ledger.",
         "parameters": [
           {
             "name": "certificateId",
@@ -569,8 +534,8 @@
     },
     "/api/upload": {
       "post": {
-        "summary": "Unggah & Terbitkan Ijazah (PDF Multipart)",
-        "description": "Endpoint utama untuk institusi. Mengunggah file ijazah PDF ke IPFS secara otomatis, mencatat CID-nya ke Hyperledger Fabric, dan menyinkronkan metadata ke database relasional PostgreSQL.",
+        "summary": "Unggah Metadata Final + PDF",
+        "description": "Mengunggah file ijazah PDF ke IPFS, lalu menyimpan metadata backend final ke PostgreSQL. Fabric dipanggil sebagai placeholder best-effort dan tidak membatalkan persistence bila gagal.",
         "requestBody": {
           "required": true,
           "content": {
@@ -581,28 +546,54 @@
                   "file_ijazah": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Berkas berkas ijazah berformat PDF."
+                    "description": "Berkas ijazah PDF."
                   },
-                  "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
-                  "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-                  "organizationName": { "type": "string", "example": "Demo University" },
-                  "departmentName": { "type": "string", "example": "Academic Office" },
-                  "mspId": { "type": "string", "example": "Org1MSP" },
-                  "certificateType": { "type": "string", "example": "DIPLOMA" },
-                  "title": { "type": "string", "example": "Bachelor of Computer Science" },
-                  "studentId": { "type": "string", "description": "NIM Mahasiswa (raw, backend otomatis akan meng-hash ke StudentIdHash)", "example": "NIM-12345" },
-                  "studentIdHash": { "type": "string", "description": "Hash Student ID jika frontend sudah melakukan hashing lokal", "example": "a4d3..." },
-                  "issuedAt": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD", "example": "2026-06-27" },
-                  "expiredAt": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD (opsional)", "example": "" }
+                  "certificateId": { "type": "string", "example": "CERT-2026-000001" },
+                  "certificateNumber": { "type": "string", "example": "0010084122122026100006" },
+                  "studentName": { "type": "string", "example": "MAYAKA PUTY DANUZKYA" },
+                  "studentId": { "type": "string", "example": "23020122130052" },
+                  "graduationDate": { "type": "string", "format": "date", "example": "2025-12-16" },
+                  "studyProgram": { "type": "string", "example": "Program Sarjana Teknologi Pangan" },
+                  "faculty": { "type": "string", "example": "Fakultas Peternakan dan Pertanian" },
+                  "degreeLevel": { "type": "string", "example": "S1" },
+                  "degreeName": { "type": "string", "example": "Sarjana Teknologi Pangan" },
+                  "degreeAbbreviation": { "type": "string", "example": "S.T.P." },
+                  "universityName": { "type": "string", "example": "Universitas Diponegoro" },
+                  "universityAccreditationNumber": { "type": "string", "example": "106/SK/BAN-PT/Ak.Ppj/PT/II/2023" },
+                  "programAccreditationAgency": { "type": "string", "example": "BAN-PT" },
+                  "programAccreditationNumber": { "type": "string", "example": "2780/SK/BAN-PT/Akred-Intl/S/VII/2023" },
+                  "issueDate": { "type": "string", "format": "date", "example": "2026-01-15" },
+                  "deanName": { "type": "string", "example": "Prof. Sugiharto, S.Pt., M.Sc., Ph.D." },
+                  "rectorName": { "type": "string", "example": "Prof. Dr. Suharnomo, S.E., M.Si." },
+                  "issuer": { "type": "string", "example": "Universitas Diponegoro" }
                 },
-                "required": ["file_ijazah", "certificateNumber", "issuerId", "organizationName", "departmentName", "mspId", "certificateType", "title", "issuedAt"]
+                "required": [
+                  "file_ijazah",
+                  "certificateNumber",
+                  "studentName",
+                  "studentId",
+                  "graduationDate",
+                  "studyProgram",
+                  "faculty",
+                  "degreeLevel",
+                  "degreeName",
+                  "degreeAbbreviation",
+                  "universityName",
+                  "universityAccreditationNumber",
+                  "programAccreditationAgency",
+                  "programAccreditationNumber",
+                  "issueDate",
+                  "deanName",
+                  "rectorName",
+                  "issuer"
+                ]
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Upload and registration successful",
+            "description": "Upload and persistence successful",
             "content": {
               "application/json": {
                 "schema": {
@@ -623,49 +614,36 @@
     },
     "/api/verify/{nomorIjazah}": {
       "get": {
-        "summary": "Verifikasi & Pencarian Nomor Ijazah",
-        "description": "Endpoint utama untuk publik / frontend. Mencari sertifikat di DB lokal berdasarkan nomor ijazah, melakukan verifikasi kecocokan data ke blockchain ledger, dan merender tautan dokumen asli jika terbukti otentik.",
+        "summary": "Verifikasi Publik Berdasarkan Nomor Ijazah",
+        "description": "Mencari metadata sertifikat di PostgreSQL berdasarkan nomor ijazah dan, bila tersedia, mencoba verifikasi placeholder ke ledger lama.",
         "parameters": [
           {
             "name": "nomorIjazah",
             "in": "path",
             "required": true,
             "schema": { "type": "string" },
-            "example": "CERT-2026-TI-0001"
+            "example": "0010084122122026100006"
           }
         ],
         "responses": {
           "200": {
-            "description": "Hasil pencarian dan status verifikasi keaslian",
+            "description": "Hasil pencarian dan verifikasi",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "valid": { "type": "boolean", "description": "Menunjukkan apakah dokumen terverifikasi asli di blockchain ledger.", "example": true },
+                    "valid": { "type": "boolean", "example": true },
                     "message": { "type": "string", "example": "certificate is valid" },
-                    "ledgerData": {
-                      "type": "object",
-                      "properties": {
-                        "certificateId": { "type": "string", "example": "UUID-1234" },
-                        "valid": { "type": "boolean", "example": true },
-                        "status": { "type": "string", "example": "ACTIVE" },
-                        "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-                        "certificateType": { "type": "string", "example": "DIPLOMA" },
-                        "message": { "type": "string", "example": "certificate is valid" },
-                        "issuedAt": { "type": "string", "example": "2026-06-27" },
-                        "revoked": { "type": "boolean", "example": false },
-                        "tampered": { "type": "boolean", "example": false }
-                      }
-                    },
+                    "ledgerData": {},
                     "dbData": {
                       "$ref": "#/components/schemas/DatabaseCertificate"
                     },
                     "documentUrl": {
                       "type": "string",
-                      "description": "URL gateway untuk mengakses berkas ijazah asli di IPFS.",
-                      "example": "http://localhost:8080/ipfs/bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
+                      "nullable": true,
+                      "example": "http://localhost:8080/ipfs/QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx"
                     }
                   }
                 }
@@ -678,15 +656,14 @@
     "/api/": {
       "get": {
         "summary": "Daftar Semua Sertifikat (Database)",
-        "description": "Mengambil daftar sertifikat yang tersimpan di database lokal PostgreSQL. Jika parameter issuerId ditentukan, ia hanya mengambil sertifikat yang diterbitkan oleh issuer tersebut.",
+        "description": "Mengambil daftar metadata sertifikat final yang tersimpan di PostgreSQL. Jika parameter issuer ditentukan, hasil disaring berdasarkan issuer backend final.",
         "parameters": [
           {
-            "name": "issuerId",
+            "name": "issuer",
             "in": "query",
             "required": false,
-            "description": "ID issuer untuk menyaring sertifikat.",
             "schema": { "type": "string" },
-            "example": "DEMO_ISSUER"
+            "example": "Universitas Diponegoro"
           }
         ],
         "responses": {
@@ -715,7 +692,6 @@
     "/fabric/health": {
       "get": {
         "summary": "Status Koneksi Fabric Gateway",
-        "description": "Memeriksa status dan kesehatan koneksi backend ke node peer Hyperledger Fabric.",
         "responses": {
           "200": {
             "description": "Connection status",
@@ -738,7 +714,6 @@
     "/fabric/invoke": {
       "post": {
         "summary": "Invoke Generic Chaincode",
-        "description": "Endpoint utilitas debug untuk mengirim transaksi general/custom ke chaincode.",
         "requestBody": {
           "required": true,
           "content": {
@@ -746,7 +721,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "fcn": { "type": "string", "description": "Nama fungsi smart contract", "example": "GetAllCertificates" },
+                  "fcn": { "type": "string", "example": "GetAllCertificates" },
                   "args": {
                     "type": "array",
                     "items": { "type": "string" },
@@ -767,7 +742,7 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "result": { "type": "string", "example": "[]" }
+                    "result": {}
                   }
                 }
               }
@@ -782,71 +757,93 @@
       "RegisterIssuerRequest": {
         "type": "object",
         "properties": {
-          "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-          "organizationName": { "type": "string", "example": "Demo University" },
-          "departmentName": { "type": "string", "example": "Academic Office" },
-          "mspId": { "type": "string", "example": "Org1MSP" }
+          "issuer": { "type": "string", "example": "Universitas Diponegoro" },
+          "universityName": { "type": "string", "example": "Universitas Diponegoro" },
+          "faculty": { "type": "string", "example": "Fakultas Peternakan dan Pertanian" }
         },
-        "required": ["issuerId", "organizationName", "departmentName", "mspId"]
+        "required": ["issuer", "universityName", "faculty"]
       },
       "IssueCertificateRequest": {
         "type": "object",
         "properties": {
-          "certificateId": { "type": "string", "example": "UUID-1234" },
-          "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
-          "studentId": { "type": "string", "example": "NIM-12345" },
-          "studentIdHash": { "type": "string", "example": "a4d3..." },
-          "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-          "certificateType": { "type": "string", "example": "DIPLOMA" },
-          "title": { "type": "string", "example": "Bachelor of Computer Science" },
-          "ipfsCid": { "type": "string", "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea" },
-          "issuedAt": { "type": "string", "example": "2026-06-27" },
-          "expiredAt": { "type": "string", "example": "" }
+          "certificateId": { "type": "string", "example": "CERT-2026-000001" },
+          "certificateNumber": { "type": "string", "example": "0010084122122026100006" },
+          "studentName": { "type": "string", "example": "MAYAKA PUTY DANUZKYA" },
+          "studentId": { "type": "string", "example": "23020122130052" },
+          "graduationDate": { "type": "string", "format": "date", "example": "2025-12-16" },
+          "studyProgram": { "type": "string", "example": "Program Sarjana Teknologi Pangan" },
+          "faculty": { "type": "string", "example": "Fakultas Peternakan dan Pertanian" },
+          "degreeLevel": { "type": "string", "example": "S1" },
+          "degreeName": { "type": "string", "example": "Sarjana Teknologi Pangan" },
+          "degreeAbbreviation": { "type": "string", "example": "S.T.P." },
+          "universityName": { "type": "string", "example": "Universitas Diponegoro" },
+          "universityAccreditationNumber": { "type": "string", "example": "106/SK/BAN-PT/Ak.Ppj/PT/II/2023" },
+          "programAccreditationAgency": { "type": "string", "example": "BAN-PT" },
+          "programAccreditationNumber": { "type": "string", "example": "2780/SK/BAN-PT/Akred-Intl/S/VII/2023" },
+          "issueDate": { "type": "string", "format": "date", "example": "2026-01-15" },
+          "deanName": { "type": "string", "example": "Prof. Sugiharto, S.Pt., M.Sc., Ph.D." },
+          "rectorName": { "type": "string", "example": "Prof. Dr. Suharnomo, S.E., M.Si." },
+          "issuer": { "type": "string", "example": "Universitas Diponegoro" },
+          "ipfsCid": { "type": "string", "example": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx" }
         },
-        "required": ["certificateNumber", "issuerId", "certificateType", "title", "ipfsCid", "issuedAt"]
+        "required": [
+          "certificateNumber",
+          "studentName",
+          "studentId",
+          "graduationDate",
+          "studyProgram",
+          "faculty",
+          "degreeLevel",
+          "degreeName",
+          "degreeAbbreviation",
+          "universityName",
+          "universityAccreditationNumber",
+          "programAccreditationAgency",
+          "programAccreditationNumber",
+          "issueDate",
+          "deanName",
+          "rectorName",
+          "issuer",
+          "ipfsCid"
+        ]
       },
       "LedgerCertificateAsset": {
         "type": "object",
         "properties": {
-          "docType": { "type": "string", "example": "certificate" },
-          "certificateId": { "type": "string", "example": "UUID-1234" },
-          "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
-          "studentIdHash": { "type": "string", "example": "a4d3..." },
-          "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-          "certificateType": { "type": "string", "example": "DIPLOMA" },
-          "title": { "type": "string", "example": "Bachelor Degree" },
-          "ipfsCid": { "type": "string", "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea" },
+          "certificateId": { "type": "string", "example": "CERT-2026-000001" },
+          "valid": { "type": "boolean", "example": true },
           "status": { "type": "string", "example": "ACTIVE" },
-          "issuedAt": { "type": "string", "example": "2026-06-27" },
-          "expiredAt": { "type": "string", "example": "" },
-          "previousCertificateId": { "type": "string", "example": "" },
-          "replacementCertificateId": { "type": "string", "example": "" },
-          "createdAt": { "type": "string", "example": "2026-06-27T00:00:00Z" },
-          "updatedAt": { "type": "string", "example": "2026-06-29T08:00:00Z" }
+          "message": { "type": "string", "example": "certificate is valid" }
         }
       },
       "DatabaseCertificate": {
         "type": "object",
         "properties": {
-          "id": { "type": "integer", "example": 1 },
-          "certificateId": { "type": "string", "example": "UUID-1234" },
-          "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
-          "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-          "certificateType": { "type": "string", "example": "DIPLOMA" },
-          "title": { "type": "string", "example": "Bachelor of Computer Science" },
-          "studentIdHash": { "type": "string", "example": "a4d3..." },
-          "ipfsCid": { "type": "string", "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea" },
-          "file_name": { "type": "string", "example": "ijazah.pdf" },
-          "mime_type": { "type": "string", "example": "application/pdf" },
-          "file_size": { "type": "integer", "example": 1048576 },
-          "ledger_tx_id": { "type": "string", "example": "tx-id-blockchain-abc" },
+          "id": { "type": "string", "example": "550e8400-e29b-41d4-a716-446655440000" },
+          "certificateId": { "type": "string", "example": "CERT-2026-000001" },
+          "certificateNumber": { "type": "string", "example": "0010084122122026100006" },
+          "studentName": { "type": "string", "example": "MAYAKA PUTY DANUZKYA" },
+          "studentId": { "type": "string", "example": "23020122130052" },
+          "graduationDate": { "type": "string", "example": "2025-12-16" },
+          "studyProgram": { "type": "string", "example": "Program Sarjana Teknologi Pangan" },
+          "faculty": { "type": "string", "example": "Fakultas Peternakan dan Pertanian" },
+          "degreeLevel": { "type": "string", "example": "S1" },
+          "degreeName": { "type": "string", "example": "Sarjana Teknologi Pangan" },
+          "degreeAbbreviation": { "type": "string", "example": "S.T.P." },
+          "universityName": { "type": "string", "example": "Universitas Diponegoro" },
+          "universityAccreditationNumber": { "type": "string", "example": "106/SK/BAN-PT/Ak.Ppj/PT/II/2023" },
+          "programAccreditationAgency": { "type": "string", "example": "BAN-PT" },
+          "programAccreditationNumber": { "type": "string", "example": "2780/SK/BAN-PT/Akred-Intl/S/VII/2023" },
+          "issueDate": { "type": "string", "example": "2026-01-15" },
+          "deanName": { "type": "string", "example": "Prof. Sugiharto, S.Pt., M.Sc., Ph.D." },
+          "rectorName": { "type": "string", "example": "Prof. Dr. Suharnomo, S.E., M.Si." },
+          "fileName": { "type": "string", "example": "0010084122122026100006.pdf" },
+          "ipfsCid": { "type": "string", "example": "QmX2wV6xxxxxxxxxxxxxxxxxxxxxxxx" },
+          "ledgerTxId": { "type": "string", "nullable": true, "example": "e54d1b5d5f90fba0d1xxxxxxxxxxxx" },
+          "issuer": { "type": "string", "example": "Universitas Diponegoro" },
           "status": { "type": "string", "example": "VALID" },
-          "issuedAt": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
-          "expiredAt": { "type": "string", "nullable": true, "example": null },
-          "previousCertificateId": { "type": "string", "nullable": true, "example": null },
-          "replacementCertificateId": { "type": "string", "nullable": true, "example": null },
-          "created_at": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
-          "updated_at": { "type": "string", "example": "2026-06-29T08:00:00.000Z" }
+          "createdAt": { "type": "string", "example": "2026-06-30T10:15:23Z" },
+          "updatedAt": { "type": "string", "example": "2026-06-30T10:15:23Z" }
         }
       }
     }

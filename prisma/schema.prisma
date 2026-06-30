@@ -36,7 +36,6 @@ model Issuer {
   updatedAt          DateTime            @updatedAt @map("updated_at")
   createdAt          DateTime            @default(now()) @map("created_at")
 
-  certificates       Certificate[]
   revocations        Revocation[]
   fabricTransactions FabricTransaction[]
 
@@ -44,32 +43,36 @@ model Issuer {
 }
 
 model Certificate {
-  id                       Int                 @id @default(autoincrement())
-  certificateId            String              @unique @map("certificate_id")
-  certificateNumber        String              @unique @map("certificate_number")
-  issuerId                 String              @map("issuer_id")
-  certificateType          String              @map("certificate_type")
-  title                    String
-  studentIdHash            String              @map("student_id_hash")
-  documentHash             String              @map("document_hash")
-  ipfsCid                  String              @map("ipfs_cid")
-  fileName                 String?             @map("file_name")
-  mimeType                 String?             @map("mime_type")
-  fileSize                 BigInt?             @map("file_size")
-  ledgerTxId               String              @map("ledger_tx_id")
-  status                   CertificateStatus   @default(VALID)
-  issuedAt                 DateTime            @map("issued_at")
-  expiredAt                DateTime?           @map("expired_at")
-  previousCertificateId    String?             @map("previous_certificate_id")
-  replacementCertificateId String?             @map("replacement_certificate_id")
-  createdAt                DateTime            @default(now()) @map("created_at")
-  updatedAt                DateTime            @updatedAt @map("updated_at")
+  id                            String               @id @default(uuid())
+  certificateId                 String               @unique @map("certificate_id")
+  certificateNumber             String               @unique @map("certificate_number")
+  studentName                   String               @map("student_name")
+  studentId                     String               @map("student_id")
+  graduationDate                DateTime             @map("graduation_date")
+  studyProgram                  String               @map("study_program")
+  faculty                       String
+  degreeLevel                   String               @map("degree_level")
+  degreeName                    String               @map("degree_name")
+  degreeAbbreviation            String               @map("degree_abbreviation")
+  universityName                String               @map("university_name")
+  universityAccreditationNumber String               @map("university_accreditation_number")
+  programAccreditationAgency    String               @map("program_accreditation_agency")
+  programAccreditationNumber    String               @map("program_accreditation_number")
+  issueDate                     DateTime             @map("issue_date")
+  deanName                      String               @map("dean_name")
+  rectorName                    String               @map("rector_name")
+  fileName                      String               @map("file_name")
+  ipfsCid                       String               @map("ipfs_cid")
+  ledgerTxId                    String?              @map("ledger_tx_id")
+  issuer                        String
+  status                        CertificateStatus    @default(VALID)
+  createdAt                     DateTime             @default(now()) @map("created_at")
+  updatedAt                     DateTime             @updatedAt @map("updated_at")
 
-  issuer                   Issuer              @relation(fields: [issuerId], references: [issuerId], onUpdate: Cascade, onDelete: Restrict)
-  revocation               Revocation?
-  fabricTransactions       FabricTransaction[]
+  revocation                    Revocation?
+  fabricTransactions            FabricTransaction[]
 
-  @@index([issuerId])
+  @@index([issuer])
   @@index([status])
   @@index([createdAt])
   @@map("certificates")
