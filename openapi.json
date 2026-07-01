@@ -534,13 +534,14 @@
                   "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
                   "studentId": { "type": "string", "description": "NIM Mahasiswa (raw, backend otomatis akan meng-hash ke StudentIdHash)", "example": "NIM-12345" },
                   "studentName": { "type": "string", "example": "John Doe" },
+                  "universityName": { "type": "string", "example": "Demo University" },
                   "studyProgram": { "type": "string", "example": "Teknik Informatika" },
                   "educationLevel": { "type": "string", "example": "S1" },
-                  "studentIdHash": { "type": "string", "description": "Hash Student ID jika frontend sudah melakukan hashing lokal", "example": "a4d3..." },
+                  "graduationDate": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD (opsional)", "example": "2026-06-30" },
                   "issuedAt": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD", "example": "2026-06-27" },
                   "expiredAt": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD (opsional)", "example": "" }
                 },
-                "required": ["file_ijazah", "certificateNumber", "issuerId", "organizationName", "departmentName", "mspId", "certificateType", "degreeTitle", "issuedAt"]
+                "required": ["file_ijazah", "certificateNumber", "issuerId", "organizationName", "departmentName", "mspId", "certificateType", "degreeTitle", "studentId", "studentName", "studyProgram", "educationLevel", "issuedAt"]
               }
             }
           }
@@ -657,6 +658,12 @@
         }
       }
     },
+    "/api/fabric/health": {
+      "$ref": "#/paths/~1fabric~1health"
+    },
+    "/api/fabric/invoke": {
+      "$ref": "#/paths/~1fabric~1invoke"
+    },
     "/fabric/health": {
       "get": {
         "summary": "Status Koneksi Fabric Gateway",
@@ -669,9 +676,14 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": { "type": "string", "example": "connected" },
                     "success": { "type": "boolean", "example": true },
-                    "channel": { "type": "string", "example": "appchannel-etcdraft" }
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "status": { "type": "string", "enum": ["connected", "degraded"], "example": "connected" },
+                        "itemCount": { "type": "integer", "nullable": true, "example": null }
+                      }
+                    }
                   }
                 }
               }
@@ -691,14 +703,15 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "fcn": { "type": "string", "description": "Nama fungsi smart contract", "example": "GetAllCertificates" },
+                  "functionName": { "type": "string", "description": "Nama fungsi smart contract", "example": "SmartContract:GetAllCertificates" },
                   "args": {
                     "type": "array",
                     "items": { "type": "string" },
                     "example": []
-                  }
+                  },
+                  "mode": { "type": "string", "enum": ["evaluate", "submit"], "example": "submit" }
                 },
-                "required": ["fcn", "args"]
+                "required": ["functionName"]
               }
             }
           }
@@ -712,7 +725,13 @@
                   "type": "object",
                   "properties": {
                     "success": { "type": "boolean", "example": true },
-                    "result": { "type": "string", "example": "[]" }
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "mode": { "type": "string", "enum": ["evaluate", "submit"], "example": "submit" },
+                        "result": { "nullable": true, "example": [] }
+                      }
+                    }
                   }
                 }
               }
@@ -785,7 +804,6 @@
           "studyProgram": { "type": "string", "example": "Teknik Informatika" },
           "educationLevel": { "type": "string", "example": "S1" },
           "graduationDate": { "type": "string", "nullable": true, "example": null },
-          "studentIdHash": { "type": "string", "example": "a4d3..." },
           "ipfsCid": { "type": "string", "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea" },
           "file_name": { "type": "string", "example": "ijazah.pdf" },
           "mime_type": { "type": "string", "example": "application/pdf" },
@@ -793,9 +811,6 @@
           "ledger_tx_id": { "type": "string", "example": "tx-id-blockchain-abc" },
           "status": { "type": "string", "example": "VALID" },
           "issuedAt": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
-          "expiredAt": { "type": "string", "nullable": true, "example": null },
-          "previousCertificateId": { "type": "string", "nullable": true, "example": null },
-          "replacementCertificateId": { "type": "string", "nullable": true, "example": null },
           "created_at": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
           "updated_at": { "type": "string", "example": "2026-06-29T08:00:00.000Z" }
         }

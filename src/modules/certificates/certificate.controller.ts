@@ -5,7 +5,6 @@ import {
   parseIssueCertificateBody,
   parseIssuerIdParams,
   parseRegisterIssuerBody,
-  parseReissueCertificateBody,
   parseRevokeCertificateBody,
   parseVerifyCertificateBody,
 } from './certificate.dto';
