@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "IPFS Hyperledger Fabric Verification Backend API",
-    "description": "API dokumentasi untuk sistem verifikasi ijazah terdesentralisasi menggunakan Hyperledger Fabric (blockchain) dan IPFS (decentralized storage) dengan database lokal PostgreSQL.",
-    "version": "1.0.0"
+    "description": "API dokumentasi untuk sistem verifikasi ijazah terdesentralisasi menggunakan Hyperledger Fabric, IPFS, PostgreSQL, dan autentikasi issuer admin berbasis JWT.",
+    "version": "1.1.0"
   },
   "servers": [
     {
@@ -11,236 +11,185 @@
       "description": "Local development server"
     }
   ],
-  "paths": {
-    "/health": {
-      "get": {
-        "summary": "Health Check",
-        "description": "Memeriksa status hidup server backend Express.",
-        "responses": {
-          "200": {
-            "description": "Server is running",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": { "type": "string", "example": "ok" },
-                    "success": { "type": "boolean", "example": true },
-                    "message": { "type": "string", "example": "Server is running" }
-                  }
-                }
-              }
-            }
-          }
-        }
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     },
-    "/api/ledger/init": {
-      "post": {
-        "summary": "Inisialisasi Ledger",
-        "description": "Mempersiapkan state awal ledger blockchain dan mendaftarkan DEMO_ISSUER bawaan.",
-        "responses": {
-          "200": {
-            "description": "Ledger initialized successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "message": { "type": "string", "example": "Ledger initialized successfully" }
-                  }
-                }
-              }
-            }
-          }
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": ["identifier", "password"],
+        "properties": {
+          "identifier": { "type": "string", "example": "admin" },
+          "password": { "type": "string", "example": "admin123" }
         }
-      }
-    },
-    "/api/issuers": {
-      "post": {
-        "summary": "Pendaftaran Issuer (Penerbit)",
-        "description": "Mendaftarkan institusi penerbit ijazah baru ke dalam blockchain ledger.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RegisterIssuerRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Issuer registered successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": { "type": "string", "example": "" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/issuers/{issuerId}": {
-      "get": {
-        "summary": "Detail Issuer",
-        "description": "Mendapatkan data institusi issuer dari blockchain berdasarkan ID.",
-        "parameters": [
-          {
-            "name": "issuerId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "example": "DEMO_ISSUER"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Issuer data retrieved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-                        "organizationName": { "type": "string", "example": "Demo University" },
-                        "departmentName": { "type": "string", "example": "Academic Office" },
-                        "mspId": { "type": "string", "example": "Org1MSP" },
-                        "status": { "type": "string", "example": "ACTIVE" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/issuers/{issuerId}/exists": {
-      "get": {
-        "summary": "Cek Keberadaan Issuer",
-        "description": "Memeriksa apakah issuer terdaftar aktif di blockchain ledger.",
-        "parameters": [
-          {
-            "name": "issuerId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Boolean status returned",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": { "type": "boolean", "example": true }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/issuers/{issuerId}/certificates": {
-      "get": {
-        "summary": "Daftar Sertifikat Berdasarkan Issuer",
-        "description": "Mengambil semua daftar sertifikat yang diterbitkan oleh issuer tertentu langsung dari blockchain.",
-        "parameters": [
-          {
-            "name": "issuerId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Array of certificates retrieved",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/LedgerCertificateAsset"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/certificates": {
-      "post": {
-        "summary": "Penerbitan Sertifikat (Ledger Direct)",
-        "description": "Mendaftarkan sertifikat baru secara langsung ke blockchain ledger (tanpa mengunggah file fisik).",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/IssueCertificateRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Certificate issued successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": { "type": "string", "example": "" }
-                  }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": {
+            "type": "object",
+            "properties": {
+              "accessToken": { "type": "string", "example": "<jwt>" },
+              "tokenType": { "type": "string", "example": "Bearer" },
+              "issuer": {
+                "type": "object",
+                "properties": {
+                  "issuerId": { "type": "string", "example": "UNDIP" },
+                  "organizationName": { "type": "string", "example": "Universitas Diponegoro" },
+                  "departmentName": { "type": "string", "example": "Fakultas Teknik" },
+                  "mspId": { "type": "string", "example": "Org1MSP" },
+                  "username": { "type": "string", "example": "admin" },
+                  "email": { "type": "string", "example": "admin@undip.ac.id" }
                 }
               }
             }
           }
         }
       },
+      "IssueCertificateRequest": {
+        "type": "object",
+        "required": ["certificateNumber", "certificateType", "degreeTitle", "ipfsCid", "issuedAt"],
+        "properties": {
+          "certificateId": { "type": "string", "example": "UUID-1234" },
+          "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
+          "studentId": { "type": "string", "example": "NIM-12345" },
+          "studentIdHash": { "type": "string", "example": "a4d3..." },
+          "issuerId": { "type": "string", "description": "Ignored for authenticated requests; server derives issuer from JWT.", "example": "UNDIP" },
+          "certificateType": { "type": "string", "example": "DIPLOMA" },
+          "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
+          "ipfsCid": { "type": "string", "example": "bafybeigdyrzt..." },
+          "issuedAt": { "type": "string", "example": "2026-06-27" },
+          "expiredAt": { "type": "string", "example": "" }
+        }
+      },
+      "UploadRequest": {
+        "type": "object",
+        "required": ["file_ijazah", "certificateNumber", "certificateType", "degreeTitle", "studentId", "studentName", "studyProgram", "educationLevel", "issuedAt"],
+        "properties": {
+          "file_ijazah": { "type": "string", "format": "binary" },
+          "certificateId": { "type": "string", "example": "UUID-1234" },
+          "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
+          "issuerId": { "type": "string", "description": "Ignored for authenticated requests; derived from authenticated issuer.", "example": "UNDIP" },
+          "organizationName": { "type": "string", "description": "Ignored for authenticated requests; derived from authenticated issuer.", "example": "Universitas Diponegoro" },
+          "departmentName": { "type": "string", "description": "Required certificate/faculty metadata. Not derived from authenticated issuer; client must send the issuing faculty/department.", "example": "Fakultas Teknik" },
+          "mspId": { "type": "string", "description": "Ignored for authenticated requests; derived from authenticated issuer.", "example": "Org1MSP" },,
+          "certificateType": { "type": "string", "example": "DIPLOMA" },
+          "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
+          "studentId": { "type": "string", "example": "NIM-12345" },
+          "studentName": { "type": "string", "example": "John Doe" },
+          "studyProgram": { "type": "string", "example": "Teknik Informatika" },
+          "educationLevel": { "type": "string", "example": "S1" },
+          "graduationDate": { "type": "string", "example": "2026-06-30" },
+          "issuedAt": { "type": "string", "example": "2026-06-27" }
+        }
+      },
+      "DatabaseCertificate": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "example": 1 },
+          "certificateId": { "type": "string", "example": "UUID-1234" },
+          "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
+          "issuerId": { "type": "string", "example": "UNDIP" },
+          "certificateType": { "type": "string", "example": "DIPLOMA" },
+          "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
+          "studentId": { "type": "string", "example": "NIM-12345" },
+          "studentName": { "type": "string", "example": "John Doe" },
+          "organizationName": { "type": "string", "example": "Universitas Diponegoro" },
+          "studyProgram": { "type": "string", "example": "Teknik Informatika" },
+          "educationLevel": { "type": "string", "example": "S1" },
+          "graduationDate": { "type": "string", "nullable": true, "example": null },
+          "ipfsCid": { "type": "string", "example": "bafybeigdyrzt..." },
+          "file_name": { "type": "string", "example": "ijazah.pdf" },
+          "mime_type": { "type": "string", "example": "application/pdf" },
+          "file_size": { "type": "integer", "example": 1048576 },
+          "ledger_tx_id": { "type": "string", "example": "tx-id-blockchain-abc" },
+          "status": { "type": "string", "example": "VALID" },
+          "issuedAt": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
+          "created_at": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
+          "updated_at": { "type": "string", "example": "2026-06-29T08:00:00.000Z" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/health": {
       "get": {
-        "summary": "Daftar Semua Sertifikat (Ledger)",
-        "description": "Mengambil rekaman sertifikat dari world state blockchain. Jika parameter issuerId ditentukan, ia akan menyaring sertifikat untuk penerbit tersebut saja.",
+        "summary": "Health Check",
+        "responses": {
+          "200": {
+            "description": "Server is running"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Issuer admin login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login success",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" }
+              }
+            }
+          },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/api/verify/{certificateNumber}": {
+      "get": {
+        "summary": "Public certificate verification",
         "parameters": [
           {
-            "name": "issuerId",
-            "in": "query",
-            "required": false,
-            "description": "ID issuer untuk menyaring sertifikat.",
-            "schema": { "type": "string" },
-            "example": "DEMO_ISSUER"
+            "name": "certificateNumber",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
           }
         ],
         "responses": {
+          "200": { "description": "Verification result" }
+        }
+      }
+    },
+    "/verify/{certificateNumber}": {
+      "get": {
+        "summary": "Public certificate verification alias",
+        "parameters": [
+          {
+            "name": "certificateNumber",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Verification result" }
+        }
+      }
+    },
+    "/api/": {
+      "get": {
+        "summary": "Public certificate search/list endpoint",
+        "responses": {
           "200": {
-            "description": "List of ledger certificates",
+            "description": "List of certificate metadata",
             "content": {
               "application/json": {
                 "schema": {
@@ -249,257 +198,7 @@
                     "success": { "type": "boolean", "example": true },
                     "data": {
                       "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/LedgerCertificateAsset"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/certificates/{certificateId}": {
-      "get": {
-        "summary": "Detail Sertifikat (Ledger)",
-        "description": "Mendapatkan data aset sertifikat dari blockchain berdasarkan ID sertifikat.",
-        "parameters": [
-          {
-            "name": "certificateId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Sertifikat ditemukan",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "$ref": "#/components/schemas/LedgerCertificateAsset"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/certificates/{certificateId}/exists": {
-      "get": {
-        "summary": "Cek Keberadaan Sertifikat",
-        "description": "Memeriksa apakah sertifikat terdaftar di blockchain ledger.",
-        "parameters": [
-          {
-            "name": "certificateId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Boolean status returned",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": { "type": "boolean", "example": true }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/certificates/{certificateId}/verify": {
-      "post": {
-        "summary": "Verifikasi Sertifikat (Ledger Direct)",
-        "description": "Memvalidasi status dan kecocokan sidik jari berkas sertifikat (IPFS CID) secara langsung ke blockchain ledger.",
-        "parameters": [
-          {
-            "name": "certificateId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "ipfsCid": {
-                    "type": "string",
-                    "description": "IPFS CID dari berkas sertifikat yang ingin dicocokkan.",
-                    "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
-                  }
-                },
-                "required": ["ipfsCid"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Verification result",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "certificateId": { "type": "string", "example": "UUID-123" },
-                        "valid": { "type": "boolean", "example": true },
-                        "status": { "type": "string", "example": "ACTIVE" },
-                        "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-                        "certificateType": { "type": "string", "example": "DIPLOMA" },
-                        "message": { "type": "string", "example": "certificate is valid" },
-                        "issuedAt": { "type": "string", "example": "2026-06-27" },
-                        "revoked": { "type": "boolean", "example": false },
-                        "tampered": { "type": "boolean", "example": false }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/certificates/{certificateId}/revoke": {
-      "post": {
-        "summary": "Pencabutan Sertifikat (Revocation)",
-        "description": "Membatalkan status aktif sertifikat di blockchain.",
-        "parameters": [
-          {
-            "name": "certificateId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "reason": { "type": "string", "description": "Alasan penarikan dokumen", "example": "Salah ketik nilai IPK" },
-                  "reasonHash": { "type": "string", "description": "Hash SHA256 alasan penarikan (opsional jika alasan raw diberikan)", "example": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824" },
-                  "revokedAt": { "type": "string", "format": "date-time", "example": "2026-06-29T08:00:00Z" }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Certificate revoked",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": { "type": "string", "example": "" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/certificates/{certificateId}/revocation": {
-      "get": {
-        "summary": "Informasi Pencabutan",
-        "description": "Mendapatkan rekaman alasan pencabutan sertifikat jika statusnya REVOKED.",
-        "parameters": [
-          {
-            "name": "certificateId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Revocation details",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "certificateId": { "type": "string", "example": "UUID-123" },
-                        "reasonHash": { "type": "string", "example": "2cf24dba..." },
-                        "revokedAt": { "type": "string", "example": "2026-06-29T08:00:00Z" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/certificates/{certificateId}/history": {
-      "get": {
-        "summary": "Riwayat Perubahan Audit",
-        "description": "Mendapatkan seluruh history transaksi dan perubahan status sertifikat dari blockchain ledger.",
-        "parameters": [
-          {
-            "name": "certificateId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "History transactions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "txId": { "type": "string", "example": "tx-12345" },
-                          "timestamp": { "type": "string", "example": "2026-06-29T08:00:00Z" },
-                          "isDelete": { "type": "boolean", "example": false },
-                          "value": {
-                            "$ref": "#/components/schemas/LedgerCertificateAsset"
-                          }
-                        }
-                      }
+                      "items": { "$ref": "#/components/schemas/DatabaseCertificate" }
                     }
                   }
                 }
@@ -511,309 +210,63 @@
     },
     "/api/upload": {
       "post": {
-        "summary": "Unggah & Terbitkan Ijazah (PDF Multipart)",
-        "description": "Endpoint utama untuk institusi. Mengunggah file ijazah PDF ke IPFS secara otomatis, mencatat CID-nya ke Hyperledger Fabric, dan menyinkronkan metadata ke database relasional PostgreSQL.",
+        "summary": "Protected certificate upload",
+        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
             "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "file_ijazah": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "Berkas berkas ijazah berformat PDF."
-                  },
-                  "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
-                  "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-                  "organizationName": { "type": "string", "example": "Demo University" },
-                  "departmentName": { "type": "string", "example": "Academic Office" },
-                  "mspId": { "type": "string", "example": "Org1MSP" },
-                  "certificateType": { "type": "string", "example": "DIPLOMA" },
-                  "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
-                  "studentId": { "type": "string", "description": "NIM Mahasiswa (raw, backend otomatis akan meng-hash ke StudentIdHash)", "example": "NIM-12345" },
-                  "studentName": { "type": "string", "example": "John Doe" },
-                  "universityName": { "type": "string", "example": "Demo University" },
-                  "studyProgram": { "type": "string", "example": "Teknik Informatika" },
-                  "educationLevel": { "type": "string", "example": "S1" },
-                  "graduationDate": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD (opsional)", "example": "2026-06-30" },
-                  "issuedAt": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD", "example": "2026-06-27" },
-                  "expiredAt": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD (opsional)", "example": "" }
-                },
-                "required": ["file_ijazah", "certificateNumber", "issuerId", "organizationName", "departmentName", "mspId", "certificateType", "degreeTitle", "studentId", "studentName", "studyProgram", "educationLevel", "issuedAt"]
-              }
+              "schema": { "$ref": "#/components/schemas/UploadRequest" }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Upload and registration successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "message": { "type": "string", "example": "Certificate uploaded successfully" },
-                    "data": {
-                      "$ref": "#/components/schemas/DatabaseCertificate"
-                    }
-                  }
-                }
-              }
-            }
-          }
+            "description": "Certificate uploaded successfully"
+          },
+          "401": { "description": "Unauthorized" }
         }
       }
     },
-    "/api/verify/{nomorIjazah}": {
+    "/api/certificates": {
       "get": {
-        "summary": "Verifikasi & Pencarian Nomor Ijazah",
-        "description": "Endpoint utama untuk publik / frontend. Mencari sertifikat di DB lokal berdasarkan nomor ijazah, melakukan verifikasi kecocokan data ke blockchain ledger, dan merender tautan dokumen asli jika terbukti otentik.",
-        "parameters": [
-          {
-            "name": "nomorIjazah",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "example": "CERT-2026-TI-0001"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Hasil pencarian dan status verifikasi keaslian",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "valid": { "type": "boolean", "description": "Menunjukkan apakah dokumen terverifikasi asli di blockchain ledger.", "example": true },
-                    "message": { "type": "string", "example": "certificate is valid" },
-                    "ledgerData": {
-                      "type": "object",
-                      "properties": {
-                        "certificateId": { "type": "string", "example": "UUID-1234" },
-                        "valid": { "type": "boolean", "example": true },
-                        "status": { "type": "string", "example": "ACTIVE" },
-                        "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-                        "certificateType": { "type": "string", "example": "DIPLOMA" },
-                        "message": { "type": "string", "example": "certificate is valid" },
-                        "issuedAt": { "type": "string", "example": "2026-06-27" },
-                        "revoked": { "type": "boolean", "example": false },
-                        "tampered": { "type": "boolean", "example": false }
-                      }
-                    },
-                    "dbData": {
-                      "$ref": "#/components/schemas/DatabaseCertificate"
-                    },
-                    "documentUrl": {
-                      "type": "string",
-                      "description": "URL gateway untuk mengakses berkas ijazah asli di IPFS.",
-                      "example": "http://localhost:8080/ipfs/bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/": {
-      "get": {
-        "summary": "Daftar Semua Sertifikat (Database)",
-        "description": "Mengambil daftar sertifikat yang tersimpan di database lokal PostgreSQL. Jika parameter issuerId ditentukan, ia hanya mengambil sertifikat yang diterbitkan oleh issuer tersebut.",
-        "parameters": [
-          {
-            "name": "issuerId",
-            "in": "query",
-            "required": false,
-            "description": "ID issuer untuk menyaring sertifikat.",
-            "schema": { "type": "string" },
-            "example": "DEMO_ISSUER"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of local database certificates",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/DatabaseCertificate"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/fabric/health": {
-      "$ref": "#/paths/~1fabric~1health"
-    },
-    "/api/fabric/invoke": {
-      "$ref": "#/paths/~1fabric~1invoke"
-    },
-    "/fabric/health": {
-      "get": {
-        "summary": "Status Koneksi Fabric Gateway",
-        "description": "Memeriksa status dan kesehatan koneksi backend ke node peer Hyperledger Fabric.",
-        "responses": {
-          "200": {
-            "description": "Connection status",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "status": { "type": "string", "enum": ["connected", "degraded"], "example": "connected" },
-                        "itemCount": { "type": "integer", "nullable": true, "example": null }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/fabric/invoke": {
+        "summary": "Protected ledger certificate list",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "Ledger certificates" } }
+      },
       "post": {
-        "summary": "Invoke Generic Chaincode",
-        "description": "Endpoint utilitas debug untuk mengirim transaksi general/custom ke chaincode.",
+        "summary": "Protected direct issue certificate endpoint",
+        "security": [{ "BearerAuth": [] }],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "functionName": { "type": "string", "description": "Nama fungsi smart contract", "example": "SmartContract:GetAllCertificates" },
-                  "args": {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "example": []
-                  },
-                  "mode": { "type": "string", "enum": ["evaluate", "submit"], "example": "submit" }
-                },
-                "required": ["functionName"]
-              }
+              "schema": { "$ref": "#/components/schemas/IssueCertificateRequest" }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Invocation response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": { "type": "boolean", "example": true },
-                    "data": {
-                      "type": "object",
-                      "properties": {
-                        "mode": { "type": "string", "enum": ["evaluate", "submit"], "example": "submit" },
-                        "result": { "nullable": true, "example": [] }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        "responses": { "201": { "description": "Certificate issued" } }
       }
-    }
-  },
-  "components": {
-    "schemas": {
-      "RegisterIssuerRequest": {
-        "type": "object",
-        "properties": {
-          "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-          "organizationName": { "type": "string", "example": "Demo University" },
-          "departmentName": { "type": "string", "example": "Academic Office" },
-          "mspId": { "type": "string", "example": "Org1MSP" }
-        },
-        "required": ["issuerId", "organizationName", "departmentName", "mspId"]
-      },
-      "IssueCertificateRequest": {
-        "type": "object",
-        "properties": {
-          "certificateId": { "type": "string", "example": "UUID-1234" },
-          "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
-          "studentId": { "type": "string", "example": "NIM-12345" },
-          "studentIdHash": { "type": "string", "example": "a4d3..." },
-          "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-          "certificateType": { "type": "string", "example": "DIPLOMA" },
-          "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
-          "ipfsCid": { "type": "string", "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea" },
-          "issuedAt": { "type": "string", "example": "2026-06-27" },
-          "expiredAt": { "type": "string", "example": "" }
-        },
-        "required": ["certificateNumber", "issuerId", "certificateType", "degreeTitle", "ipfsCid", "issuedAt"]
-      },
-      "LedgerCertificateAsset": {
-        "type": "object",
-        "properties": {
-          "docType": { "type": "string", "example": "certificate" },
-          "certificateId": { "type": "string", "example": "UUID-1234" },
-          "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
-          "studentIdHash": { "type": "string", "example": "a4d3..." },
-          "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-          "certificateType": { "type": "string", "example": "DIPLOMA" },
-          "title": { "type": "string", "example": "Bachelor Degree" },
-          "ipfsCid": { "type": "string", "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea" },
-          "status": { "type": "string", "example": "ACTIVE" },
-          "issuedAt": { "type": "string", "example": "2026-06-27" },
-          "expiredAt": { "type": "string", "example": "" },
-          "previousCertificateId": { "type": "string", "example": "" },
-          "replacementCertificateId": { "type": "string", "example": "" },
-          "createdAt": { "type": "string", "example": "2026-06-27T00:00:00Z" },
-          "updatedAt": { "type": "string", "example": "2026-06-29T08:00:00Z" }
-        }
-      },
-      "DatabaseCertificate": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "example": 1 },
-          "certificateId": { "type": "string", "example": "UUID-1234" },
-          "certificateNumber": { "type": "string", "example": "CERT-2026-TI-0001" },
-          "issuerId": { "type": "string", "example": "DEMO_ISSUER" },
-          "certificateType": { "type": "string", "example": "DIPLOMA" },
-          "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
-          "studentId": { "type": "string", "example": "NIM-12345" },
-          "studentName": { "type": "string", "example": "John Doe" },
-          "universityName": { "type": "string", "example": "Demo University" },
-          "studyProgram": { "type": "string", "example": "Teknik Informatika" },
-          "educationLevel": { "type": "string", "example": "S1" },
-          "graduationDate": { "type": "string", "nullable": true, "example": null },
-          "ipfsCid": { "type": "string", "example": "bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea" },
-          "file_name": { "type": "string", "example": "ijazah.pdf" },
-          "mime_type": { "type": "string", "example": "application/pdf" },
-          "file_size": { "type": "integer", "example": 1048576 },
-          "ledger_tx_id": { "type": "string", "example": "tx-id-blockchain-abc" },
-          "status": { "type": "string", "example": "VALID" },
-          "issuedAt": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
-          "created_at": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
-          "updated_at": { "type": "string", "example": "2026-06-29T08:00:00.000Z" }
-        }
+    },
+    "/api/certificates/{certificateId}/verify": {
+      "post": {
+        "summary": "Protected legacy manual verify endpoint",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "Verification result" } }
+      }
+    },
+    "/api/fabric/health": {
+      "get": {
+        "summary": "Protected Fabric health",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "Fabric health" } }
+      }
+    },
+    "/api/fabric/invoke": {
+      "post": {
+        "summary": "Protected Fabric invoke",
+        "security": [{ "BearerAuth": [] }],
+        "responses": { "200": { "description": "Invoke result" } }
       }
     }
   }
