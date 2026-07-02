@@ -15,10 +15,10 @@ import { certificateService,
     verifyCertificateService   , } from './certificate.service';
 import { getIPFSGatewayUrl } from '../../infrastructure/ipfs/ipfs.service';
 
-function removeDocumentHash<T extends { readonly documentHash?: unknown }>(certificate: T): Omit<T, 'documentHash'> {
-  const { documentHash, ...cleanCertificate } = certificate;
+function removeDocumentHash<T extends object>(certificate: T): Omit<T, 'documentHash'> {
+  const { documentHash: _documentHash, ...cleanCertificate } = certificate as T & { readonly documentHash?: unknown };
 
-  return cleanCertificate;
+  return cleanCertificate as Omit<T, 'documentHash'>;
 }
 
 export async function initLedger(_req: Request, res: Response): Promise<void> {

@@ -1,5 +1,6 @@
 import { Router } from 'express';
-import { upload } from "../../middleware/upload.middleware";
+import { requireIssuerAdmin } from '../../middleware/auth.middleware';
+import { upload } from '../../middleware/upload.middleware';
 import {
   getAllCertificatesController,
   uploadCertificateController,
@@ -37,6 +38,7 @@ certificateRoutes.get('/certificates/:certificateId/history', asyncHandler(certi
 
 certificateRoutes.post(
   "/upload",
+  requireIssuerAdmin(),
   upload.single("file_ijazah"),
   asyncHandler(uploadCertificateController)
 );
