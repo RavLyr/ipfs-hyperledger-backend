@@ -119,8 +119,8 @@ export async function uploadCertificateController(
   req: Request,
   res: Response
 ): Promise<void> {
-  const certificate = await uploadCertificate(req.body, req.file);
-  const { documentHash, ...cleanData } = certificate;
+  const certificate = await uploadCertificate(req.body, req.file, req.auth!.issuer);
+  const cleanData = certificate;
 
   res.status(201).json({
     success: true,
@@ -158,7 +158,7 @@ export async function verifyCertificateController(
     }) as any;
 
     const valid = ledgerResult && ledgerResult.valid === true;
-    const { documentHash, ...cleanDbData } = certificate;
+    const cleanDbData = certificate;
 
     // 4. Respond with ledger status, DB metadata, and IPFS document URL if valid
     res.json({

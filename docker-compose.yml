@@ -81,6 +81,7 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
+      JWT_SECRET: ${JWT_SECRET}
       DATABASE_URL: postgresql://${DB_USER:-postgres}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:-ipfs_hyperledger_db}?schema=public
       DB_HOST: postgres
       DB_PORT: 5432

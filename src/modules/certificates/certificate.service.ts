@@ -238,17 +238,24 @@ export async function uploadCertificate(
     expiredAt: ''
   });
 
-  return insertCertificate({
-    ...input,
-    documentHash: ipfsCid,
-    ipfsCid,
-    file_name: file.originalname,
-    mime_type: file.mimetype,
-    file_size: file.size,
-    ledger_tx_id: fabricTransaction.transactionId,
-    status: 'VALID',
-  });
+    return dependencies.insertCertificate({
+      ...input,
+
+      ipfsCid,
+      file_name: file.originalname,
+      mime_type: file.mimetype,
+      file_size: file.size,
+      ledger_tx_id: fabricTransaction.transactionId,
+      status: 'VALID',
+    });
+  };
 }
+
+export const uploadCertificate = createUploadCertificateService({
+  uploadToIPFS,
+  findCertificateByCertificateNumber,
+  insertCertificate,
+});
 
 export async function verifyCertificateService(
   certificateNumber: string
