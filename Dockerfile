@@ -10,6 +10,9 @@ RUN corepack enable
 # ──────────── Stage 2: Build (Dependencies + Compilation + Prisma Generate) ────────────
 FROM base AS build
 
+# Native deps (pkcs11js, bcrypt) need node-gyp build tools
+RUN apk add --no-cache python3 make g++
+
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 

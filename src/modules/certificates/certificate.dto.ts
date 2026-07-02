@@ -104,6 +104,21 @@ export function parseRegisterIssuerBody(body: unknown): RegisterIssuerInput {
   };
 }
 
+export type LoginInput = {
+  readonly identifier: string;
+  readonly password: string;
+};
+
+export function parseLoginBody(body: unknown): LoginInput {
+  if (!isRecord(body)) {
+    throw validationError({ body: 'Expected object' });
+  }
+  return {
+    identifier: readRequiredString(body, 'identifier'),
+    password: readRequiredString(body, 'password'),
+  };
+}
+
 export function parseIssueCertificateBody(body: unknown): IssueCertificateInput {
   if (!isRecord(body)) {
     throw validationError({ body: 'Expected object' });
@@ -175,7 +190,7 @@ export interface Certificate {
   degreeTitle: string;
   studentId: string;
   studentName: string;
-  universityName: string;
+  organizationName: string;
   studyProgram: string;
   educationLevel: string;
   graduationDate: string | null;
@@ -202,7 +217,6 @@ export interface CertificateTextInput {
   degreeTitle: string;
   studentId: string;
   studentName: string;
-  universityName: string;
   studyProgram: string;
   educationLevel: string;
   graduationDate: string;

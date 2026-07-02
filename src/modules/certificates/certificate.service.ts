@@ -17,6 +17,9 @@ import {
   findAllCertificates,
   findCertificateByCertificateNumber,
   insertCertificate,
+  findCertificateById,
+  updateCertificateStatus,
+  insertRevocation,
 } from './certificate.repository';
 
 export type FabricGateway = {
@@ -173,10 +176,33 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
       );
     },
 
-    revokeCertificate(input: RevokeCertificateInput): Promise<FabricResult> {
-      return runFabric(() =>
-        gateway.submitTransaction(chaincodeFunction('RevokeCertificate'), input.certificateId, input.reasonHash, input.revokedAt)
+    async revokeCertificate(input: RevokeCertificateInput): Promise<FabricResult> {
+      const { transactionId, result } = await runFabric(() =>
+        gateway.submitTransactionWithTxId(
+          chaincodeFunction('RevokeCertificate'),
+          input.certificateId,
+          input.reasonHash,
+          input.revokedAt
+        )
       );
+
+      // Sync revocation to PostgreSQL after successful ledger commit
+      await updateCertificateStatus(input.certificateId, 'REVOKED');
+
+      const cert = await findCertificateById(input.certificateId);
+
+      if (cert) {
+        await insertRevocation({
+          revocationId: `rev-${Date.now()}`,
+          certificateId: cert.certificateId,
+          issuerId: cert.issuerId,
+          reasonHash: input.reasonHash,
+          ledgerTxId: transactionId,
+          revokedAt: input.revokedAt,
+        });
+      }
+
+      return result;
     },
 
     getRevocationInfo(certificateId: string): Promise<FabricResult> {
@@ -199,48 +225,54 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
 
 export const certificateService = createCertificateService();
 
-export async function uploadCertificate(
-  body: RawBody,
-  file: Express.Multer.File | undefined
-): Promise<Certificate> {
-  if (!file) {
-    throw new Error('file_ijazah is required');
-  }
+export interface UploadCertificateDependencies {
+  uploadToIPFS: typeof uploadToIPFS;
+  findCertificateByCertificateNumber: typeof findCertificateByCertificateNumber;
+  insertCertificate: typeof insertCertificate;
+}
 
-  const input = validateCertificateBody(body);
-  const existingCertificate = await findCertificateByCertificateNumber(input.certificateNumber);
+export function createUploadCertificateService(dependencies: UploadCertificateDependencies) {
+  return async function uploadCertificate(
+    body: RawBody,
+    file: Express.Multer.File | undefined
+  ): Promise<Certificate> {
+    if (!file) {
+      throw new Error('file_ijazah is required');
+    }
 
-  if (existingCertificate) {
-    throw new Error(`certificateNumber already exists: ${input.certificateNumber}`);
-  }
+    const input = validateCertificateBody(body);
+    const existingCertificate = await dependencies.findCertificateByCertificateNumber(input.certificateNumber);
 
-  const ipfsCid = await uploadToIPFS(file.buffer, file.originalname);
-  const issuerExists = await certificateService.issuerExists(input.issuerId);
+    if (existingCertificate) {
+      throw new Error(`certificateNumber already exists: ${input.certificateNumber}`);
+    }
 
-  if (!isTrueFabricResult(issuerExists)) {
-    await certificateService.registerIssuer({
+    const ipfsCid = await dependencies.uploadToIPFS(file.buffer, file.originalname);
+    const issuerExists = await certificateService.issuerExists(input.issuerId);
+
+    if (!isTrueFabricResult(issuerExists)) {
+      await certificateService.registerIssuer({
+        issuerId: input.issuerId,
+        organizationName: input.organizationName,
+        departmentName: input.departmentName,
+        mspId: input.mspId,
+      });
+    }
+
+    const fabricTransaction = await certificateService.issueCertificateWithTxId({
+      certificateId: input.certificateId,
+      certificateNumber: input.certificateNumber,
+      studentIdHash: sha256Hex(input.studentId),
       issuerId: input.issuerId,
-      organizationName: input.organizationName,
-      departmentName: input.departmentName,
-      mspId: input.mspId,
+      certificateType: input.certificateType,
+      title: input.degreeTitle,
+      ipfsCid,
+      issuedAt: input.issuedAt,
+      expiredAt: ''
     });
-  }
-
-  const fabricTransaction = await certificateService.issueCertificateWithTxId({
-    certificateId: input.certificateId,
-    certificateNumber: input.certificateNumber,
-    studentIdHash: sha256Hex(input.studentId),
-    issuerId: input.issuerId,
-    certificateType: input.certificateType,
-    title: input.degreeTitle,
-    ipfsCid,
-    issuedAt: input.issuedAt,
-    expiredAt: ''
-  });
 
     return dependencies.insertCertificate({
       ...input,
-
       ipfsCid,
       file_name: file.originalname,
       mime_type: file.mimetype,
@@ -305,7 +337,6 @@ function validateCertificateBody(body: RawBody): CertificateTextInput {
     degreeTitle: clean(body.degreeTitle),
     studentId: clean(body.studentId),
     studentName: clean(body.studentName),
-    universityName: clean(body.universityName),
     studyProgram: clean(body.studyProgram),
     educationLevel: clean(body.educationLevel),
     graduationDate,

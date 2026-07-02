@@ -21,6 +21,7 @@ export type Env = {
   readonly DB_NAME: string;
   readonly IPFS_API_URL: string;
   readonly IPFS_GATEWAY_URL: string;
+  readonly JWT_SECRET: string;
 };
 
 function readString(name: keyof Omit<Env, 'PORT'>): string {
@@ -63,4 +64,5 @@ export const env: Env = {
   DB_NAME: process.env.DB_NAME || "ipfs_hyperledger_db",
   IPFS_API_URL: process.env.IPFS_API_URL || "http://127.0.0.1:5001",
   IPFS_GATEWAY_URL: process.env.IPFS_GATEWAY_URL || "http://127.0.0.1:8081",
+  JWT_SECRET: process.env.JWT_SECRET || "default_jwt_secret_for_development",
 };
