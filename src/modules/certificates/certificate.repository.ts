@@ -83,6 +83,45 @@ export async function insertCertificate(
   return mapCertificate(certificate);
 }
 
+export async function markCertificateRevoked(data: {
+  readonly certificateId: string;
+  readonly reasonHash: string;
+  readonly ledgerTxId: string;
+  readonly revokedAt: string;
+}): Promise<Certificate> {
+  const revokedAt = new Date(data.revokedAt);
+
+  const certificate = await prisma.$transaction(async (tx) => {
+    const currentCertificate = await tx.certificate.findUniqueOrThrow({
+      where: { certificateId: data.certificateId },
+    });
+
+    await tx.revocation.upsert({
+      where: { certificateId: data.certificateId },
+      update: {
+        reasonHash: data.reasonHash,
+        ledgerTxId: data.ledgerTxId,
+        revokedAt,
+      },
+      create: {
+        revocationId: `REVOKE_${data.certificateId}`,
+        certificateId: data.certificateId,
+        issuerId: currentCertificate.issuerId,
+        reasonHash: data.reasonHash,
+        ledgerTxId: data.ledgerTxId,
+        revokedAt,
+      },
+    });
+
+    return tx.certificate.update({
+      where: { certificateId: data.certificateId },
+      data: { status: "REVOKED" },
+    });
+  });
+
+  return mapCertificate(certificate);
+}
+
 export async function findCertificateByCertificateNumber(
   certificateNumber: string
 ): Promise<Certificate | null> {

@@ -10,9 +10,16 @@ import {
 } from './certificate.dto';
 import { certificateService,
     getAllCertificatesService,
+    revokeCertificateAndSync,
     uploadCertificate,
     verifyCertificateService   , } from './certificate.service';
 import { getIPFSGatewayUrl } from '../../infrastructure/ipfs/ipfs.service';
+
+function removeDocumentHash<T extends { readonly documentHash?: unknown }>(certificate: T): Omit<T, 'documentHash'> {
+  const { documentHash, ...cleanCertificate } = certificate;
+
+  return cleanCertificate;
+}
 
 export async function initLedger(_req: Request, res: Response): Promise<void> {
   const result = await certificateService.initLedger();
@@ -78,9 +85,16 @@ export async function verifyCertificate(req: Request, res: Response): Promise<vo
 
 export async function revokeCertificate(req: Request, res: Response): Promise<void> {
   const input = parseRevokeCertificateBody(req.params, req.body as unknown);
-  const result = await certificateService.revokeCertificate(input);
+  const result = await revokeCertificateAndSync(input);
 
-  res.json({ success: true, message: 'Certificate revoked successfully', data: result });
+  res.json({
+    success: true,
+    message: 'Certificate revoked successfully',
+    data: {
+      ...result,
+      certificate: removeDocumentHash(result.certificate)
+    }
+  });
 }
 
 export async function getRevocationInfo(req: Request, res: Response): Promise<void> {
@@ -120,7 +134,7 @@ export async function uploadCertificateController(
   res: Response
 ): Promise<void> {
   const certificate = await uploadCertificate(req.body, req.file);
-  const { documentHash, ...cleanData } = certificate;
+  const cleanData = removeDocumentHash(certificate);
 
   res.status(201).json({
     success: true,
@@ -158,7 +172,7 @@ export async function verifyCertificateController(
     }) as any;
 
     const valid = ledgerResult && ledgerResult.valid === true;
-    const { documentHash, ...cleanDbData } = certificate;
+    const cleanDbData = removeDocumentHash(certificate);
 
     // 4. Respond with ledger status, DB metadata, and IPFS document URL if valid
     res.json({
@@ -189,6 +203,6 @@ export async function getAllCertificatesController(
 
   res.json({
     success: true,
-    data: certificates,
+    data: certificates.map(removeDocumentHash),
   });
 }

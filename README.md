@@ -90,7 +90,7 @@ Current local Fabric runtime:
 * Docker network: `fabric_migration_net`
 * Channel: `appchannel-etcdraft`
 * Chaincode: `ijazah`
-* Current committed definition: version `2.0`, sequence `5`
+* Current committed definition: version `4.0`, sequence `5`
 * Endorsement policy: `OR('Org1MSP.peer','Org2MSP.peer')`
 
 ---
@@ -107,7 +107,7 @@ curl -X POST http://localhost:3000/api/ledger/init
 
 # 🛰️ Frontend Integration Guide (API Documentation)
 
-> The smart contract and backend use **`ipfsCid`** as the single content identifier. Frontend developers only need to work with **`ipfsCid`** when handling file identity and proof-of-authenticity operations.
+> The smart contract and backend use **`ipfsCid`** as the single content identifier. `IssueCertificate` currently sends 9 ledger arguments; richer student and institution metadata is stored in PostgreSQL and documented in `openapi.json`.
 
 ---
 
@@ -129,18 +129,23 @@ multipart/form-data
 
 ### Form Data Fields
 
-| Field             | Type | Description                                     |
-| ----------------- | ---- | ----------------------------------------------- |
-| file_ijazah       | File | Original certificate PDF                        |
-| certificateNumber | Text | Unique certificate number                       |
-| studentId         | Text | Student identification number                   |
-| issuerId          | Text | Issuing institution ID (default: `DEMO_ISSUER`) |
-| organizationName  | Text | University name                                 |
-| departmentName    | Text | Faculty or department                           |
-| mspId             | Text | Blockchain MSP ID (default: `Org1MSP`)          |
-| certificateType   | Text | Certificate category (e.g., `DIPLOMA`)          |
-| title             | Text | Degree title                                    |
-| issuedAt          | Text | Issue date (`YYYY-MM-DD`)                       |
+| Field             | Type | Description                                      |
+| ----------------- | ---- | ------------------------------------------------ |
+| file_ijazah       | File | Original certificate PDF                         |
+| certificateNumber | Text | Unique certificate number                        |
+| issuerId          | Text | Issuing institution ID (default: `DEMO_ISSUER`)  |
+| organizationName  | Text | Issuer organization name                         |
+| departmentName    | Text | Issuer department/faculty                        |
+| mspId             | Text | Blockchain MSP ID (default: `Org1MSP`)           |
+| certificateType   | Text | Certificate category (e.g., `DIPLOMA`)           |
+| degreeTitle       | Text | Degree title; mapped to ledger `title` argument  |
+| studentId         | Text | Student identification number; hashed for ledger |
+| studentName       | Text | Student display name stored in PostgreSQL        |
+| universityName    | Text | University display name stored in PostgreSQL     |
+| studyProgram      | Text | Study program stored in PostgreSQL               |
+| educationLevel    | Text | Education level stored in PostgreSQL             |
+| graduationDate    | Text | Optional graduation date (`YYYY-MM-DD`)          |
+| issuedAt          | Text | Issue date (`YYYY-MM-DD`)                        |
 
 ### Example Success Response
 

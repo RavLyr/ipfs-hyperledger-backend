@@ -17,6 +17,7 @@ import {
   findAllCertificates,
   findCertificateByCertificateNumber,
   insertCertificate,
+  markCertificateRevoked,
 } from './certificate.repository';
 
 export type FabricGateway = {
@@ -179,6 +180,19 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
       );
     },
 
+    revokeCertificateWithTxId(
+      input: RevokeCertificateInput
+    ): Promise<{ readonly transactionId: string; readonly result: FabricResult }> {
+      return runFabric(() =>
+        gateway.submitTransactionWithTxId(
+          chaincodeFunction("RevokeCertificate"),
+          input.certificateId,
+          input.reasonHash,
+          input.revokedAt
+        )
+      );
+    },
+
     getRevocationInfo(certificateId: string): Promise<FabricResult> {
       return runFabric(() => gateway.evaluateTransaction(chaincodeFunction('GetRevocationInfo'), certificateId));
     },
@@ -248,6 +262,24 @@ export async function uploadCertificate(
     ledger_tx_id: fabricTransaction.transactionId,
     status: 'VALID',
   });
+}
+
+export async function revokeCertificateAndSync(input: RevokeCertificateInput): Promise<{
+  readonly fabricResult: FabricResult;
+  readonly certificate: Certificate;
+}> {
+  const fabricTransaction = await certificateService.revokeCertificateWithTxId(input);
+  const certificate = await markCertificateRevoked({
+    certificateId: input.certificateId,
+    reasonHash: input.reasonHash,
+    ledgerTxId: fabricTransaction.transactionId,
+    revokedAt: input.revokedAt,
+  });
+
+  return {
+    fabricResult: fabricTransaction.result,
+    certificate,
+  };
 }
 
 export async function verifyCertificateService(
