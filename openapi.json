@@ -7,8 +7,8 @@
   },
   "servers": [
     {
-      "url": "http://134.122.125.198:3000",
-      "description": "Current VPS API server; set PUBLIC_API_URL in environment for deployments"
+      "url": "http://localhost:3000",
+      "description": "Local development server"
     }
   ],
   "paths": {
@@ -44,7 +44,6 @@
                       "type": "object",
                       "properties": {
                         "accessToken": { "type": "string", "example": "eyJhbG..." },
-                        "tokenType": { "type": "string", "example": "Bearer" },
                         "issuer": {
                           "type": "object",
                           "properties": {
@@ -53,7 +52,9 @@
                             "departmentName": { "type": "string" },
                             "mspId": { "type": "string" },
                             "username": { "type": "string" },
-                            "email": { "type": "string" }
+                            "email": { "type": "string" },
+                            "isActive": { "type": "boolean" },
+                            "status": { "type": "string" }
                           }
                         }
                       }
@@ -707,7 +708,7 @@
                     "documentUrl": {
                       "type": "string",
                       "description": "URL gateway untuk mengakses berkas ijazah asli di IPFS.",
-                      "example": "http://134.122.125.198:8081/ipfs/bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
+                      "example": "http://localhost:8080/ipfs/bafkreiagd7rpkbe4s3lsljm2vnk23wrf6e3vsjhrk43z5daxaea7bofgea"
                     }
                   }
                 }
