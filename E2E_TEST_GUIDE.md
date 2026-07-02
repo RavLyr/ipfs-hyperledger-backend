@@ -114,6 +114,10 @@ UPLOAD_RESPONSE=$(curl -s -X POST http://localhost:3000/api/upload \
   -H "Authorization: Bearer $TOKEN" \
   -F "file_ijazah=@/tmp/e2e_test.pdf" \
   -F "certificateNumber=E2E-TEST-$(date +%s)" \
+  -F "issuerId=$ISSUER_ID" \
+  -F "organizationName=Universitas Diponegoro" \
+  -F "departmentName=Fakultas Teknik" \
+  -F "mspId=Org1MSP" \
   -F "certificateType=DIPLOMA" \
   -F "degreeTitle=Sarjana Teknik Informatika" \
   -F "studentId=NIM-E2E-001" \

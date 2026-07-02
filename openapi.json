@@ -12,6 +12,103 @@
     }
   ],
   "paths": {
+    "/auth/login": {
+      "post": {
+        "summary": "Login Issuer Admin",
+        "description": "Endpoint untuk otentikasi issuer (admin) dan mendapatkan JWT Token.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "identifier": { "type": "string", "description": "Username, Email, atau Issuer ID", "example": "admin" },
+                  "password": { "type": "string", "example": "admin123" }
+                },
+                "required": ["identifier", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login berhasil, mengembalikan token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "accessToken": { "type": "string", "example": "eyJhbG..." },
+                        "issuer": {
+                          "type": "object",
+                          "properties": {
+                            "issuerId": { "type": "string" },
+                            "organizationName": { "type": "string" },
+                            "departmentName": { "type": "string" },
+                            "mspId": { "type": "string" },
+                            "username": { "type": "string" },
+                            "email": { "type": "string" },
+                            "isActive": { "type": "boolean" },
+                            "status": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Registrasi Issuer Admin Baru",
+        "description": "Mendaftarkan akun issuer admin baru beserta kredensial login (hanya di database, belum didaftarkan ke blockchain ledger).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "issuerId": { "type": "string", "example": "NEW_ISSUER" },
+                  "organizationName": { "type": "string", "example": "New University" },
+                  "departmentName": { "type": "string", "example": "Academic Office" },
+                  "mspId": { "type": "string", "example": "Org1MSP" },
+                  "username": { "type": "string", "example": "newadmin" },
+                  "email": { "type": "string", "example": "admin@new.ac.id" },
+                  "password": { "type": "string", "example": "securepass" }
+                },
+                "required": ["issuerId", "organizationName", "departmentName", "mspId", "username", "email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registrasi berhasil.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Issuer registered successfully" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
@@ -534,7 +631,7 @@
                   "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
                   "studentId": { "type": "string", "description": "NIM Mahasiswa (raw, backend otomatis akan meng-hash ke StudentIdHash)", "example": "NIM-12345" },
                   "studentName": { "type": "string", "example": "John Doe" },
-                  "universityName": { "type": "string", "example": "Demo University" },
+                  "organizationName": { "type": "string", "example": "Demo University" },
                   "studyProgram": { "type": "string", "example": "Teknik Informatika" },
                   "educationLevel": { "type": "string", "example": "S1" },
                   "graduationDate": { "type": "string", "format": "date", "description": "Format YYYY-MM-DD (opsional)", "example": "2026-06-30" },
@@ -800,7 +897,7 @@
           "degreeTitle": { "type": "string", "example": "Bachelor of Computer Science" },
           "studentId": { "type": "string", "example": "NIM-12345" },
           "studentName": { "type": "string", "example": "John Doe" },
-          "universityName": { "type": "string", "example": "Demo University" },
+          "organizationName": { "type": "string", "example": "Demo University" },
           "studyProgram": { "type": "string", "example": "Teknik Informatika" },
           "educationLevel": { "type": "string", "example": "S1" },
           "graduationDate": { "type": "string", "nullable": true, "example": null },
@@ -813,8 +910,19 @@
           "issuedAt": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
           "created_at": { "type": "string", "example": "2026-06-27T00:00:00.000Z" },
           "updated_at": { "type": "string", "example": "2026-06-29T08:00:00.000Z" }
-        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     }
-  }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
 }
