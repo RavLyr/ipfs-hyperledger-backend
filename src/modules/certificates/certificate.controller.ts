@@ -133,6 +133,9 @@ export async function uploadCertificateController(
   req: Request,
   res: Response
 ): Promise<void> {
+  if (req.body.issuerId !== req.auth!.issuer.issuerId) {
+    throw new Error('You can only upload certificates for your own issuer');
+  }
   const certificate = await uploadCertificate(req.body, req.file);
   const cleanData = removeDocumentHash(certificate);
 

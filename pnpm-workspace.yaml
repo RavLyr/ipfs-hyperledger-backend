@@ -1,6 +1,7 @@
 allowBuilds:
   '@prisma/client': true
   '@prisma/engines': true
+  bcrypt: true
   esbuild: true
   pkcs11js: true
   prisma: true
@@ -8,7 +9,10 @@ allowBuilds:
 onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'
+  - bcrypt
   - esbuild
   - pkcs11js
   - prisma
   - protobufjs
+packages:
+  - '.'

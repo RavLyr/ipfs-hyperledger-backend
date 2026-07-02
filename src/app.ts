@@ -21,9 +21,12 @@ app.get('/health', (_req, res) => {
   });
 });
 
+import { authRoutes } from './modules/auth/auth.routes';
+
 app.use('/fabric', fabricRoutes);
 app.use('/api/fabric', fabricRoutes);
 app.use('/api', certificateRoutes);
+app.use('/auth', authRoutes);
 app.use("/certificates", certificateRoutes);
 app.use(notFoundMiddleware);
 app.use(errorMiddleware);

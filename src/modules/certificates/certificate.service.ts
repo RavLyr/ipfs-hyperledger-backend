@@ -254,7 +254,6 @@ export async function uploadCertificate(
 
   return insertCertificate({
     ...input,
-    documentHash: ipfsCid,
     ipfsCid,
     file_name: file.originalname,
     mime_type: file.mimetype,
@@ -330,7 +329,6 @@ function validateCertificateBody(body: RawBody): CertificateTextInput {
     degreeTitle: clean(body.degreeTitle),
     studentId: clean(body.studentId),
     studentName: clean(body.studentName),
-    universityName: clean(body.universityName),
     studyProgram: clean(body.studyProgram),
     educationLevel: clean(body.educationLevel),
     graduationDate,
