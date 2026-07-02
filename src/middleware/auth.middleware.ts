@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 
 import { env } from '../config/env';
 import { AppError } from '../errors/AppError';
-import { findIssuerByIssuerId, type AuthenticatedIssuer } from '../modules/certificates/certificate.repository';
+import { findIssuerByIdentifier as findIssuerByIssuerId, type AuthenticatedIssuer } from '../modules/certificates/certificate.repository';
 
 export type AuthRole = 'ISSUER_ADMIN';
 

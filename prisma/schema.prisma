@@ -32,6 +32,14 @@ model Issuer {
   mspId              String              @map("msp_id")
   status             IssuerStatus        @default(ACTIVE)
   ledgerTxId         String?             @map("ledger_tx_id")
+  
+  // Auth fields
+  username           String?             @unique @map("username")
+  email              String?             @unique @map("email")
+  passwordHash       String?             @map("password_hash")
+  isActive           Boolean             @default(true) @map("is_active")
+  lastLogin          DateTime?           @map("last_login")
+
   registeredAt       DateTime            @default(now()) @map("registered_at")
   updatedAt          DateTime            @updatedAt @map("updated_at")
   createdAt          DateTime            @default(now()) @map("created_at")

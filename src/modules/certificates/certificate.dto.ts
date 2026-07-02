@@ -175,7 +175,8 @@ export interface Certificate {
   degreeTitle: string;
   studentId: string;
   studentName: string;
-  universityName: string;
+  organizationName: string;
+
   studyProgram: string;
   educationLevel: string;
   graduationDate: string | null;
@@ -202,7 +203,7 @@ export interface CertificateTextInput {
   degreeTitle: string;
   studentId: string;
   studentName: string;
-  universityName: string;
+
   studyProgram: string;
   educationLevel: string;
   graduationDate: string;
@@ -217,4 +218,43 @@ export interface CreateCertificateInput extends CertificateTextInput {
   file_size: number;
   ledger_tx_id: string;
   status: CertificateStatus;
+}
+export type RegisterInput = {
+  readonly issuerId: string;
+  readonly organizationName: string;
+  readonly departmentName: string;
+  readonly mspId: string;
+  readonly username: string;
+  readonly email: string;
+  readonly passwordRaw: string;
+};
+
+export function parseRegisterBody(body: unknown): RegisterInput {
+  if (!isRecord(body)) {
+    throw validationError({ body: 'Expected object' });
+  }
+  return {
+    issuerId: readRequiredString(body, 'issuerId'),
+    organizationName: readRequiredString(body, 'organizationName'),
+    departmentName: readRequiredString(body, 'departmentName'),
+    mspId: readRequiredString(body, 'mspId'),
+    username: readRequiredString(body, 'username'),
+    email: readRequiredString(body, 'email'),
+    passwordRaw: readRequiredString(body, 'password'),
+  };
+}
+
+export type LoginInput = {
+  readonly identifier: string;
+  readonly password: string;
+};
+
+export function parseLoginBody(body: unknown): LoginInput {
+  if (!isRecord(body)) {
+    throw validationError({ body: 'Expected object' });
+  }
+  return {
+    identifier: readRequiredString(body, 'identifier'),
+    password: readRequiredString(body, 'password'),
+  };
 }

@@ -81,3 +81,21 @@ export const loginIssuer = createLoginIssuerService({
   comparePassword: bcrypt.compare,
   signToken: signAccessToken,
 });
+
+import { createIssuerAccount } from '../certificates/certificate.repository';
+import type { RegisterInput } from '../certificates/certificate.dto';
+
+export async function registerIssuer(input: RegisterInput): Promise<void> {
+  const existingIssuer = await findIssuerByIdentifier(input.issuerId);
+  if (existingIssuer) {
+    throw new AppError('Issuer already exists', 400);
+  }
+
+  const saltRounds = 10;
+  const passwordHash = await bcrypt.hash(input.passwordRaw, saltRounds);
+
+  await createIssuerAccount({
+    ...input,
+    passwordHash
+  });
+}

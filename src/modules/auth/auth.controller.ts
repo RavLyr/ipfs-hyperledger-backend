@@ -12,3 +12,16 @@ export async function login(req: Request, res: Response): Promise<void> {
     data
   });
 }
+
+import { parseRegisterBody } from '../certificates/certificate.dto';
+import { registerIssuer } from './auth.service';
+
+export async function register(req: Request, res: Response): Promise<void> {
+  const input = parseRegisterBody(req.body as unknown);
+  await registerIssuer(input);
+
+  res.status(201).json({
+    success: true,
+    message: 'Issuer registered successfully'
+  });
+}

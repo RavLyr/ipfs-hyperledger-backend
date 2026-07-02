@@ -238,24 +238,16 @@ export async function uploadCertificate(
     expiredAt: ''
   });
 
-    return dependencies.insertCertificate({
-      ...input,
-
-      ipfsCid,
-      file_name: file.originalname,
-      mime_type: file.mimetype,
-      file_size: file.size,
-      ledger_tx_id: fabricTransaction.transactionId,
-      status: 'VALID',
-    });
-  };
+  return insertCertificate({
+    ...input,
+    ipfsCid,
+    file_name: file.originalname,
+    mime_type: file.mimetype,
+    file_size: file.size,
+    ledger_tx_id: fabricTransaction.transactionId,
+    status: 'VALID',
+  });
 }
-
-export const uploadCertificate = createUploadCertificateService({
-  uploadToIPFS,
-  findCertificateByCertificateNumber,
-  insertCertificate,
-});
 
 export async function verifyCertificateService(
   certificateNumber: string
@@ -305,7 +297,6 @@ function validateCertificateBody(body: RawBody): CertificateTextInput {
     degreeTitle: clean(body.degreeTitle),
     studentId: clean(body.studentId),
     studentName: clean(body.studentName),
-    universityName: clean(body.universityName),
     studyProgram: clean(body.studyProgram),
     educationLevel: clean(body.educationLevel),
     graduationDate,

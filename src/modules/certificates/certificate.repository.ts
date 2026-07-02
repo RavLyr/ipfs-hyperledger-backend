@@ -25,7 +25,7 @@ function mapCertificate(row: PrismaCertificate): Certificate {
     degreeTitle: row.degreeTitle,
     studentId: row.studentId,
     studentName: row.studentName,
-    universityName: row.universityName,
+    organizationName: row.organizationName,
     studyProgram: row.studyProgram,
     educationLevel: row.educationLevel,
     graduationDate: row.graduationDate ? formatDateOnly(row.graduationDate) : null,
@@ -65,7 +65,7 @@ export async function insertCertificate(
       degreeTitle: data.degreeTitle,
       studentId: data.studentId,
       studentName: data.studentName,
-      universityName: data.universityName,
+      organizationName: data.organizationName,
       studyProgram: data.studyProgram,
       educationLevel: data.educationLevel,
       graduationDate: data.graduationDate ? toDate(data.graduationDate) : null,
@@ -101,4 +101,75 @@ export async function findAllCertificates(issuerId?: string): Promise<Certificat
   });
 
   return certificates.map(mapCertificate);
+}
+
+export type AuthenticatedIssuer = {
+  readonly issuerId: string;
+  readonly organizationName: string;
+  readonly departmentName: string;
+  readonly mspId: string;
+  readonly username: string;
+  readonly email: string;
+  readonly passwordHash: string;
+  readonly isActive: boolean;
+  readonly status: string;
+};
+
+export async function findIssuerByIdentifier(identifier: string): Promise<AuthenticatedIssuer | null> {
+  const issuer = await prisma.issuer.findFirst({
+    where: {
+      OR: [
+        { username: identifier },
+        { email: identifier },
+        { issuerId: identifier }
+      ]
+    }
+  });
+
+  if (!issuer) return null;
+
+  return {
+    issuerId: issuer.issuerId,
+    organizationName: issuer.organizationName,
+    departmentName: issuer.departmentName,
+    mspId: issuer.mspId,
+    username: issuer.username!,
+    email: issuer.email!,
+    passwordHash: issuer.passwordHash!,
+    isActive: issuer.isActive,
+    status: issuer.status,
+  };
+}
+
+export async function updateIssuerLastLogin(issuerId: string, loggedInAt: Date): Promise<void> {
+  await prisma.issuer.update({
+    where: { issuerId },
+    data: { lastLogin: loggedInAt }
+  });
+}
+
+export type CreateIssuerInput = {
+  issuerId: string;
+  organizationName: string;
+  departmentName: string;
+  mspId: string;
+  username: string;
+  email: string;
+  passwordHash: string;
+};
+
+export async function createIssuerAccount(data: CreateIssuerInput): Promise<void> {
+  await prisma.issuer.create({
+    data: {
+      issuerId: data.issuerId,
+      organizationName: data.organizationName,
+      departmentName: data.departmentName,
+      mspId: data.mspId,
+      username: data.username,
+      email: data.email,
+      passwordHash: data.passwordHash,
+      isActive: true,
+      status: 'ACTIVE'
+    }
+  });
 }
