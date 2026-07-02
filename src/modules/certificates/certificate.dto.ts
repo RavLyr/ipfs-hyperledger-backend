@@ -33,11 +33,6 @@ export type RevokeCertificateInput = {
   readonly revokedAt: string;
 };
 
-export type LoginInput = {
-  readonly identifier: string;
-  readonly password: string;
-};
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -109,7 +104,7 @@ export function parseRegisterIssuerBody(body: unknown): RegisterIssuerInput {
   };
 }
 
-export function parseIssueCertificateBody(body: unknown, issuerIdOverride?: string): IssueCertificateInput {
+export function parseIssueCertificateBody(body: unknown): IssueCertificateInput {
   if (!isRecord(body)) {
     throw validationError({ body: 'Expected object' });
   }
@@ -128,7 +123,7 @@ export function parseIssueCertificateBody(body: unknown, issuerIdOverride?: stri
     certificateId: readNonEmptyString(body, 'certificateId') ?? randomUUID(),
     certificateNumber: readRequiredString(body, 'certificateNumber'),
     studentIdHash,
-    issuerId: issuerIdOverride ?? readRequiredString(body, 'issuerId'),
+    issuerId: readRequiredString(body, 'issuerId'),
     certificateType: readRequiredString(body, 'certificateType'),
     title: readRequiredString(body, 'degreeTitle'),
     ipfsCid: readRequiredString(body, 'ipfsCid'),
@@ -169,18 +164,7 @@ export function parseRevokeCertificateBody(params: unknown, body: unknown): Revo
   };
 }
 
-export function parseLoginBody(body: unknown): LoginInput {
-  if (!isRecord(body)) {
-    throw validationError({ body: 'Expected object' });
-  }
-
-  return {
-    identifier: readRequiredString(body, 'identifier'),
-    password: readRequiredString(body, 'password')
-  };
-}
-
-export type CertificateStatus = 'VALID' | 'REVOKED';
+export type CertificateStatus = "VALID" | "REVOKED";
 
 export interface Certificate {
   id: number;
@@ -191,7 +175,7 @@ export interface Certificate {
   degreeTitle: string;
   studentId: string;
   studentName: string;
-  organizationName: string;
+  universityName: string;
   studyProgram: string;
   educationLevel: string;
   graduationDate: string | null;
@@ -218,6 +202,7 @@ export interface CertificateTextInput {
   degreeTitle: string;
   studentId: string;
   studentName: string;
+  universityName: string;
   studyProgram: string;
   educationLevel: string;
   graduationDate: string;
