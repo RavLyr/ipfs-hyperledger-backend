@@ -195,7 +195,7 @@ export interface Certificate {
   studyProgram: string;
   educationLevel: string;
   graduationDate: string | null;
-  documentHash: string;
+
   ipfsCid: string;
   file_name: string | null;
   mime_type: string | null;
@@ -225,7 +225,7 @@ export interface CertificateTextInput {
 }
 
 export interface CreateCertificateInput extends CertificateTextInput {
-  documentHash: string;
+
   ipfsCid: string;
   file_name: string;
   mime_type: string;

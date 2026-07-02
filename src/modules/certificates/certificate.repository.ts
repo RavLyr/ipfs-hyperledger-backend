@@ -43,7 +43,7 @@ function mapCertificate(row: PrismaCertificate): Certificate {
     studyProgram: row.studyProgram,
     educationLevel: row.educationLevel,
     graduationDate: row.graduationDate ? formatDateOnly(row.graduationDate) : null,
-    documentHash: row.documentHash,
+
     ipfsCid: row.ipfsCid,
     file_name: row.fileName,
     mime_type: row.mimeType,
@@ -95,7 +95,7 @@ export async function insertCertificate(
       studyProgram: data.studyProgram,
       educationLevel: data.educationLevel,
       graduationDate: data.graduationDate ? toDate(data.graduationDate) : null,
-      documentHash: data.documentHash,
+
       ipfsCid: data.ipfsCid,
       fileName: data.file_name,
       mimeType: data.mime_type,

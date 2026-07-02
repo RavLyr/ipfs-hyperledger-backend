@@ -256,7 +256,7 @@ describe('certificate lifecycle chaincode mapping', () => {
           studyProgram: data.studyProgram,
           educationLevel: data.educationLevel,
           graduationDate: data.graduationDate || null,
-          documentHash: data.documentHash,
+
           ipfsCid: data.ipfsCid,
           file_name: data.file_name,
           mime_type: data.mime_type,

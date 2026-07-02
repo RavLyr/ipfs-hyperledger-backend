@@ -120,7 +120,7 @@ export async function uploadCertificateController(
   res: Response
 ): Promise<void> {
   const certificate = await uploadCertificate(req.body, req.file, req.auth!.issuer);
-  const { documentHash, ...cleanData } = certificate;
+  const cleanData = certificate;
 
   res.status(201).json({
     success: true,
@@ -153,7 +153,7 @@ export async function verifyCertificateController(
     }) as any;
 
     const valid = ledgerResult && ledgerResult.valid === true;
-    const { documentHash, ...cleanDbData } = certificate;
+    const cleanDbData = certificate;
 
     res.json({
       success: true,

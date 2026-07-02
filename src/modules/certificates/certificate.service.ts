@@ -247,7 +247,7 @@ export function createUploadCertificateService(dependencies: CertificateServiceD
 
     return dependencies.insertCertificate({
       ...input,
-      documentHash: ipfsCid,
+
       ipfsCid,
       file_name: file.originalname,
       mime_type: file.mimetype,
