@@ -139,7 +139,6 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
           input.certificateType,
           input.title,
           input.ipfsCid,
-          input.ipfsCid,
           input.issuedAt,
           input.expiredAt
         )
@@ -158,7 +157,6 @@ export function createCertificateService(gateway: FabricGateway = defaultGateway
           input.issuerId,
           input.certificateType,
           input.title,
-          input.ipfsCid,
           input.ipfsCid,
           input.issuedAt,
           input.expiredAt

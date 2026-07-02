@@ -39,6 +39,7 @@ export class FabricGatewayClient {
     args: readonly string[] = []
   ): Promise<FabricSubmitResult> {
     const contract = await this.getContract();
+    console.log("SUBMITTING TO FABRIC: ", functionName, args);
     const submittedTransaction = await contract.submitAsync(functionName, { arguments: [...args] });
     const status = await submittedTransaction.getStatus();
 
