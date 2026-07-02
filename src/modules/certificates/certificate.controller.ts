@@ -8,12 +8,10 @@ import {
   parseRevokeCertificateBody,
   parseVerifyCertificateBody,
 } from './certificate.dto';
-import {
-  certificateService,
-  getAllCertificatesService,
-  uploadCertificate,
-  verifyCertificateService,
-} from './certificate.service';
+import { certificateService,
+    getAllCertificatesService,
+    uploadCertificate,
+    verifyCertificateService   , } from './certificate.service';
 import { getIPFSGatewayUrl } from '../../infrastructure/ipfs/ipfs.service';
 
 export async function initLedger(_req: Request, res: Response): Promise<void> {
@@ -44,7 +42,7 @@ export async function issuerExists(req: Request, res: Response): Promise<void> {
 }
 
 export async function issueCertificate(req: Request, res: Response): Promise<void> {
-  const input = parseIssueCertificateBody(req.body as unknown, req.auth!.issuer.issuerId);
+  const input = parseIssueCertificateBody(req.body as unknown);
   const result = await certificateService.issueCertificate(input);
 
   res.status(201).json({
@@ -115,6 +113,8 @@ export async function getCertificatesByIssuer(req: Request, res: Response): Prom
   res.json({ success: true, data: result });
 }
 
+
+
 export async function uploadCertificateController(
   req: Request,
   res: Response
@@ -124,10 +124,14 @@ export async function uploadCertificateController(
 
   res.status(201).json({
     success: true,
-    message: 'Certificate uploaded successfully',
+    message: "Certificate uploaded successfully",
     data: cleanData,
   });
 }
+
+type VerifyCertificateParams = {
+  nomorIjazah: string;
+};
 
 export async function verifyCertificateController(
   req: Request,
@@ -147,14 +151,16 @@ export async function verifyCertificateController(
   }
 
   try {
+    // 3. Verify on Ledger using certificateId and ipfsCid retrieved from DB
     const ledgerResult = await certificateService.verifyCertificate({
       certificateId: certificate.certificateId,
-      ipfsCid: certificate.ipfsCid,
+      ipfsCid: certificate.ipfsCid, // Using stored ipfsCid to verify
     }) as any;
 
     const valid = ledgerResult && ledgerResult.valid === true;
     const cleanDbData = certificate;
 
+    // 4. Respond with ledger status, DB metadata, and IPFS document URL if valid
     res.json({
       success: true,
       valid,

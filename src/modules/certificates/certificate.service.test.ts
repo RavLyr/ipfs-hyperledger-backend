@@ -2,13 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { AppError } from '../../errors/AppError';
-import { createRequireAuth, createRequireIssuerAdmin } from '../../middleware/auth.middleware';
-import { createLoginIssuerService } from '../auth/auth.service';
-import { createUploadCertificateService, createCertificateService, type FabricGateway } from './certificate.service';
-import { parseIssueCertificateBody, parseRevokeCertificateBody } from './certificate.dto';
-import type { AuthenticatedIssuer } from './certificate.repository';
 import { sha256Hex } from '../../utils/hash';
-
+import { parseIssueCertificateBody, parseRevokeCertificateBody } from './certificate.dto';
+import { createCertificateService, type FabricGateway } from './certificate.service';
 
 type Call = {
   readonly mode: 'evaluate' | 'submit';
@@ -45,19 +41,6 @@ function createMockGateway(results: Record<string, unknown> = {}): { gateway: Fa
   };
 }
 
-const authenticatedIssuer: AuthenticatedIssuer = {
-  id: 1,
-  issuerId: 'UNDIP',
-  organizationName: 'Universitas Diponegoro',
-  departmentName: 'Fakultas Teknik',
-  mspId: 'Org1MSP',
-  username: 'admin',
-  email: 'admin@undip.ac.id',
-  passwordHash: 'hashed-password',
-  isActive: true,
-  status: 'ACTIVE',
-};
-
 describe('certificate lifecycle chaincode mapping', () => {
   it('registers issuer with RegisterIssuer argument order', async () => {
     const { gateway, calls } = createMockGateway();
@@ -88,7 +71,7 @@ describe('certificate lifecycle chaincode mapping', () => {
       studentId: 'NIM-RAW-001',
       issuerId: 'DEMO_ISSUER',
       certificateType: 'DIPLOMA',
-      degreeTitle: 'Bachelor Certificate',
+      title: 'Bachelor Certificate',
       ipfsCid: 'bafy-certificate',
       issuedAt: '2026-06-18T00:00:00Z'
     });
@@ -106,7 +89,6 @@ describe('certificate lifecycle chaincode mapping', () => {
           'DEMO_ISSUER',
           'DIPLOMA',
           'Bachelor Certificate',
-          'bafy-certificate',
           'bafy-certificate',
           '2026-06-18T00:00:00Z',
           ''
